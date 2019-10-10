@@ -79,7 +79,7 @@ typedef struct
 
 //----------------------Globals-------------------------------------------------
 Model *model1, *sphere;
-FBOstruct *fbo1, *fbo2, *fbo3;
+FBOstruct *fbo1, *fbo2, *fbo3, *posfbo;
 GLuint phongshader = 0,
 			 plaintextureshader = 0,
 			 trunktextureshader = 0,
@@ -113,6 +113,8 @@ void init(void)
 	fbo1 = initFBO(W, H, 0); // picture
 	fbo2 = initFBO(W, H, 0); // trunk img
 	fbo3 = initFBO(W, H, 0); // filtrering img
+	posfbo = initFBO(2, 1, 0); //positions
+
 
 	// load the model
 //	model1 = LoadModelPlus("teapot.obj");
@@ -165,7 +167,7 @@ void display(void)
 	//  function will get called several times per second
 
 	// render to fbo1!
-	useFBO(0L, 0L, 0L);
+	useFBO(0L, posfbo, 0L);
 
 	// Clear framebuffer & zbuffer
 	glClearColor(0.1, 0.1, 0.3, 0);
@@ -190,7 +192,7 @@ void display(void)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-
+	
 	DrawModelInstanced(sphere, phongshader, "in_Position", "in_Normal", NULL, 2);
 
 	// Done rendering the FBO! Set up for rendering on screen, using the result as texture!
