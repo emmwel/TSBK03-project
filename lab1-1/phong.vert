@@ -13,6 +13,6 @@ void main(void)
 	exNormal = inverse(transpose(mat3(modelviewMatrix))) * in_Normal; // Phong, "fake" normal transformation
 
 	exSurface = vec3(modelviewMatrix * vec4(in_Position, 1.0)); // Don't include projection here - we only want to go to view coordinates
-
-	gl_Position = projectionMatrix * modelviewMatrix * vec4(in_Position, 1.0); // This should include projection
+	vec3 newpos = in_Position + vec3(0, 0.1*gl_InstanceID, 0);
+	gl_Position = projectionMatrix * modelviewMatrix * vec4(newpos, 1.0); // This should include projection
 }

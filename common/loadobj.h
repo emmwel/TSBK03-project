@@ -26,7 +26,7 @@ typedef struct
   GLuint* indexArray;
   int numVertices;
   int numIndices;
-  
+
   // Space for saving VBO and VAO IDs
   GLuint vao; // VAO
   GLuint vb, ib, nb, tb; // VBOs
@@ -41,6 +41,7 @@ Model** LoadModel2(const char* name); // Multi-part OBJ!
 // DrawModel is for drawing such preloaded models.
 
 void DrawModel(Model *m, GLuint program, const char* vertexVariableName, const char* normalVariableName, const char* texCoordVariableName);
+void DrawModelInstanced(Model *m, GLuint program, const char* vertexVariableName, const char* normalVariableName, const char* texCoordVariableName, GLsizei instances);
 void DrawWireframeModel(Model *m, GLuint program, const char* vertexVariableName, const char* normalVariableName, const char* texCoordVariableName);
 
 Model* LoadModelPlus(const char* name);
