@@ -33,8 +33,8 @@
 #include "loadobj.h"
 
 // initial width and heights
-#define W 256
-#define H 256
+#define W 512
+#define H 512
 
 // Globals
 FBOstruct *fbo1;
@@ -63,7 +63,7 @@ void init(void)
 	dumpInfo();
 
     // GL inits
-    glClearColor(0.2,0.2,0.5,0); // sets to blue color
+    glClearColor(1.0,1.0,1.0,0); // sets to white color
     glEnable(GL_DEPTH_TEST);
 
     // Load and compile shader
@@ -83,7 +83,7 @@ void display(void)
     useFBO(0L, fbo1, 0L);
 
     // clear the screen
-    glClearColor(0.2,0.2,0.5,0); // sets to blue color
+    glClearColor(1.0,1.0,1.0,0); // sets to white color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Activate shader program
