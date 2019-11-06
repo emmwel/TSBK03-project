@@ -32,6 +32,29 @@
 #include "GL_utilities.h"
 #include "loadobj.h"
 
+// initial width and heights
+#define W 256
+#define H 256
+
+// Globals
+FBOstruct *fbo1;
+GLuint min_shader = 0;
+
+// Billboard to draw texture on
+GLfloat square[] = {
+							-1,-1,0,
+							-1,1, 0,
+							1,1, 0,
+							1,-1, 0};
+GLfloat squareTexCoord[] = {
+							 0, 0,
+							 0, 1,
+							 1, 1,
+							 1, 0};
+GLuint squareIndices[] = {0, 1, 2, 0, 2, 3};
+
+Model* squareModel;
+
 void init(void)
 {
     // Reference to shader program:
@@ -40,26 +63,45 @@ void init(void)
 	dumpInfo();
 
     // GL inits
-    glClearColor(0.2,0.2,0.5,0);
+    glClearColor(0.2,0.2,0.5,0); // sets to blue color
     glEnable(GL_DEPTH_TEST);
+
     // Load and compile shader
-    program = loadShaders("minimal.vert", "minimal.frag"); // In our GL_utilities
+    min_shader = loadShaders("minimal.vert", "minimal.frag"); // In our GL_utilities
     printError("init shader");
 
-    glUseProgram(program);
+    fbo1 = initNoiseFBO(W, H, 0); // picture
+
+    squareModel = LoadDataToModel(
+			square, NULL, squareTexCoord, NULL,
+			squareIndices, 4, 6);
 
 }
 
 void display(void)
 {
+    useFBO(0L, fbo1, 0L);
+
     // clear the screen
+    glClearColor(0.2,0.2,0.5,0); // sets to blue color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Activate shader program
+    glUseProgram(min_shader);
+    glUniform1i(glGetUniformLocation(min_shader, "texUnit"), 0);
+
+    DrawModel(squareModel, min_shader, "in_Position", NULL, "in_TexCoord");
+
     glFlush();
+    glutSwapBuffers();
 }
 
 int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+	glutInitWindowSize(W, H);
+
     glutInitContextVersion(3, 2);
     glutCreateWindow ("GL3 white triangle example");
     glutDisplayFunc(display);

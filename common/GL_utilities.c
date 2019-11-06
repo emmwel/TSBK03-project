@@ -49,7 +49,7 @@ char* readFile(char *file)
 	fread(buf, length, 1, fptr); /* Read the contents of the file in to the buffer */
 	fclose(fptr); /* Close the file */
 	buf[length] = 0; /* Null terminator */
-	
+
 	return buf; /* Return the buffer */
 }
 
@@ -102,7 +102,7 @@ GLuint compileShaders(const char *vs, const char *fs, const char *gs, const char
 								const char *vfn, const char *ffn, const char *gfn, const char *tcfn, const char *tefn)
 {
 	GLuint v,f,g,tc,te,p;
-	
+
 	v = glCreateShader(GL_VERTEX_SHADER);
 	f = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(v, 1, &vs, NULL);
@@ -128,7 +128,7 @@ GLuint compileShaders(const char *vs, const char *fs, const char *gs, const char
 		glShaderSource(te, 1, &tes, NULL);
 		glCompileShader(te);
 	}
-#endif	
+#endif
 	p = glCreateProgram();
 	glAttachShader(p,v);
 	glAttachShader(p,f);
@@ -140,15 +140,15 @@ GLuint compileShaders(const char *vs, const char *fs, const char *gs, const char
 		glAttachShader(p,te);
 	glLinkProgram(p);
 	glUseProgram(p);
-	
+
 	printShaderInfoLog(v, vfn);
 	printShaderInfoLog(f, ffn);
 	if (gs != NULL)	printShaderInfoLog(g, gfn);
 	if (tcs != NULL)	printShaderInfoLog(tc, tcfn);
 	if (tes != NULL)	printShaderInfoLog(te, tefn);
-	
+
 	printProgramInfoLog(p, vfn, ffn, gfn, tcfn, tefn);
-	
+
 	return p;
 }
 
@@ -169,7 +169,7 @@ GLuint loadShadersGT(const char *vertFileName, const char *fragFileName, const c
 {
 	char *vs, *fs, *gs, *tcs, *tes;
 	GLuint p = 0;
-	
+
 	vs = readFile((char *)vertFileName);
 	fs = readFile((char *)fragFileName);
 	gs = readFile((char *)geomFileName);
@@ -354,7 +354,7 @@ FBOstruct *initFBO2(int width, int height, int int_method, int create_depthimage
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glBindTexture(GL_TEXTURE_2D, 0);
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fbo->depth, 0);	
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fbo->depth, 0);
       fprintf(stderr, "depthtexture: %i\n",fbo->depth);
     }
 
@@ -366,6 +366,58 @@ FBOstruct *initFBO2(int width, int height, int int_method, int create_depthimage
     fprintf(stderr, "Framebuffer object %d\n", fbo->fb);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return fbo;
+}
+
+
+
+FBOstruct *initNoiseFBO(int width, int height, int int_method)
+{
+	FBOstruct *fbo = malloc(sizeof(FBOstruct));
+
+	fbo->width = width;
+	fbo->height = height;
+
+	// create objects
+	glGenFramebuffers(1, &fbo->fb); // frame buffer id
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo->fb);
+	glGenTextures(1, &fbo->texid);
+	fprintf(stderr, "%i \n",fbo->texid);
+	glBindTexture(GL_TEXTURE_2D, fbo->texid);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	if (int_method == 0)
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+
+	float *numbers[256*256*4]; // create RGBA values
+
+	for (int i = 0; i < 256*256*4; ++i) {
+		float f = 1.0f;
+		numbers[i] = &f;
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, numbers);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo->texid, 0);
+
+	// Renderbuffer
+	// initialize depth renderbuffer
+    glGenRenderbuffers(1, &fbo->rb);
+    glBindRenderbuffer(GL_RENDERBUFFER, fbo->rb);
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbo->width, fbo->height );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo->rb );
+    CHECK_FRAMEBUFFER_STATUS();
+
+	fprintf(stderr, "Framebuffer object %d\n", fbo->fb);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	return fbo;
 }
 
 static int lastw = 0;
@@ -400,7 +452,7 @@ void useFBO(FBOstruct *out, FBOstruct *in1, FBOstruct *in2)
 			lasth = viewport[3] - viewport[1];
 		}
 	}
-	
+
 	if (out != 0L)
 		glViewport(0, 0, out->width, out->height);
 	else
