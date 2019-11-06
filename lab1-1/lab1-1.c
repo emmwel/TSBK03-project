@@ -15,6 +15,7 @@
 
 #ifdef __APPLE__
 // Mac
+	#define GL_SILENCE_DEPRECATION
 	#include <OpenGL/gl3.h>
 	#include "MicroGlut.h"
 	// uses framework Cocoa
@@ -192,7 +193,7 @@ void display(void)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	
+
 	DrawModelInstanced(sphere, phongshader, "in_Position", "in_Normal", NULL, 2);
 
 	// Done rendering the FBO! Set up for rendering on screen, using the result as texture!

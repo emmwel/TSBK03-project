@@ -1,6 +1,6 @@
+#define GL_SILENCE_DEPRECATION
 #ifndef _MICROGLUT_
 #define _MICROGLUT_
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -123,7 +123,7 @@ void glutInitContextVersion(int major, int minor);
 #define GLUT_KEY_ESC			 27
 #define GLUT_KEY_TAB			  9
 #define GLUT_KEY_RETURN			 13
-#define GLUT_KEY_SPACE			' ' 
+#define GLUT_KEY_SPACE			' '
 #define GLUT_KEY_SEMICOLON		';'
 #define GLUT_KEY_COMMA			','
 #define GLUT_KEY_DECIMAL		'.'

@@ -26,7 +26,7 @@
 // 120301: Resizable window. Correct vertical window position.
 // 120808: Fixed a bug that caused error messages. (Calling finishLaunching twice.)
 // 120822: Stencil now uses 8 instead of 32
-// 120905: Two corrections suggested by Marcus StenbŠck.
+// 120905: Two corrections suggested by Marcus Stenbï¿½ck.
 // 120913: Added 2-button emulation with CTRL
 // 130103: Added [m_context makeCurrentContext]; in all user callbacks. (GL calls had no effect.)
 // 130127: Added basic popup menu support
@@ -62,7 +62,7 @@
 
 // Incompatibility in mouse coordinates; global or local?
 // Should be local! (I think they are now!)
-
+#define GL_SILENCE_DEPRECATION
 #import <Cocoa/Cocoa.h>
 #include <OpenGL/gl.h>
 #include <stdlib.h>
@@ -119,12 +119,12 @@ void MakeContext(NSView *view)
 	NSOpenGLPixelFormat *fmt;
 	int zdepth, sdepth, i;
 	int profile = 0, profileVersion = 0;
-	
+
 	if (gContextInitMode & GLUT_DEPTH)
 		zdepth = 32;
 	else
 		zdepth = 0;
-	
+
 	if (gContextInitMode & GLUT_STENCIL)
 		sdepth = 8;
 	else
@@ -141,9 +141,9 @@ void MakeContext(NSView *view)
 //		profile, profileVersion,
 //		multi,
 	};
-	
+
 	i = 4;
-	
+
 // Def this out about for disabling profile selection support,
 // if it is on we are defaulting to GL 1/2
 #ifndef GL3ONLY
@@ -161,18 +161,18 @@ void MakeContext(NSView *view)
 	{
 		attrs[i++] = NSOpenGLPFADoubleBuffer;
 	}
-	
+
 	if (gContextInitMode & GLUT_MULTISAMPLE)
 	{
 		attrs[i++] = NSOpenGLPFAMultisample;
 	}
-	
+
 	// Save view (should be packaged with context for multi-window application - to do)
 	theView = view;
-	
+
 	// Init GL context
 	fmt = [[NSOpenGLPixelFormat alloc] initWithAttributes: &attrs[0]];
-	
+
 	m_context = [[NSOpenGLContext alloc] initWithFormat: fmt shareContext: nil];
 	[fmt release];
 //	[m_context makeCurrentContext];
@@ -220,7 +220,7 @@ int glutCreateMenu(void (*func)(int value))
 void glutAddMenuEntry(char *name, int value)
 {
 	NSMenuItem *menuItem1;
-	
+
 	menuItem1 = NSMenuItem.alloc;
 	// string to NSString
 	NSString * s = [NSString stringWithCString: name encoding: NSASCIIStringEncoding];
@@ -234,7 +234,7 @@ void glutAddMenuEntry(char *name, int value)
 void glutChangeToMenuEntry(int index, char *name, int value)
 {
 	NSMenuItem *menuItem1;
-	
+
 	menuItem1 = [currentMenu itemAtIndex: index-1];
 	if (menuItem1 != NULL)
 	{
@@ -259,7 +259,7 @@ void glutAddSubMenu(char *name, int menu)
 {
 	NSMenuItem *item;
 	NSString * s = [NSString stringWithCString: name encoding: NSASCIIStringEncoding];
-	
+
 	item = [currentMenu addItemWithTitle: s action: nil keyEquivalent: @""];
 	[currentMenu setSubmenu: menuList[menu] forItem: item];
 }
@@ -267,7 +267,7 @@ void glutAddSubMenu(char *name, int menu)
 void glutDetachMenu(int button)
 {
 	// reset a data item for the button
-	buttons[button] = nil;	
+	buttons[button] = nil;
 }
 
 // Check name on this!
@@ -291,7 +291,7 @@ int glutGetMenu(void)
 static void doKeyboardEvent(NSEvent *theEvent, void (*func)(unsigned char key, int x, int y), void (*specialfunc)(unsigned char key, int x, int y), int keyMapValue)
 {
 	char *chars;
-	
+
 	chars = (char *)[[theEvent characters] cStringUsingEncoding: NSMacOSRomanStringEncoding];
 	NSPoint mouseDownPos = [theEvent locationInWindow];
 
@@ -299,7 +299,7 @@ static void doKeyboardEvent(NSEvent *theEvent, void (*func)(unsigned char key, i
 	{
 		if (func != NULL) // Change 120913
 			func(chars[0], mouseDownPos.x, mouseDownPos.y); // TO DO: x and y
-		
+
 		gKeymap[(unsigned int)chars[0]] = keyMapValue;
 	}
 	else
@@ -381,7 +381,7 @@ NSPoint gMousePosition;
 {
 //	NSPoint p;
 	[m_context makeCurrentContext];
-	
+
 	gMousePosition = [theEvent locationInWindow];
 	gMousePosition = [self convertPoint: gMousePosition fromView: nil];
 	if (gMouseMoved != nil)
@@ -394,7 +394,7 @@ NSPoint gMousePosition;
 {
 	NSPoint p;
 	[m_context makeCurrentContext];
-	
+
 	if (gMouseDragged != nil)
 	{
 		p = [theEvent locationInWindow];
@@ -403,12 +403,12 @@ NSPoint gMousePosition;
 	}
 }
 
-// Clone of above, but necessary for supporting the alternative button. Thanks to Marcus StenbŠck!
+// Clone of above, but necessary for supporting the alternative button. Thanks to Marcus Stenbï¿½ck!
 -(void) rightMouseDragged:(NSEvent *)theEvent
 {
 	NSPoint p;
 	[m_context makeCurrentContext];
-	
+
 	if (gMouseDragged != nil)
 	{
 		p = [theEvent locationInWindow];
@@ -425,7 +425,7 @@ char gLeftIsRight = 0;
 {
 	NSPoint p;
 	[m_context makeCurrentContext];
-	
+
 	gButtonPressed[0] = 1; // Could maybe be modified by NSControlKeyMask...?
 
 	if (gMouseFunc != nil)
@@ -435,7 +435,7 @@ char gLeftIsRight = 0;
 //	printf("mouseDown before convertPoint %f %f \n", p.x, p.y);
 		p = [self convertPoint: p fromView: nil];
 //	printf("mouseDown %f %f \n", p.x, p.y);
-		
+
 		if ([NSEvent modifierFlags] & NSControlKeyMask)
 		{
 			gMouseFunc(GLUT_RIGHT_BUTTON, GLUT_DOWN, p.x, p.y);
@@ -475,7 +475,7 @@ char gLeftIsRight = 0;
 		// Convert location in window to location in view
 		p = [theEvent locationInWindow];
 		p = [self convertPoint: p fromView: nil];
-		
+
 		// Assuming that the user won't release CTRL - then it looks like different buttons
 		if (gLeftIsRight)
 			gMouseFunc(GLUT_RIGHT_BUTTON, GLUT_UP, p.x, p.y);
@@ -488,7 +488,7 @@ char gLeftIsRight = 0;
 {
 	NSPoint p;
 	[m_context makeCurrentContext];
-	
+
 	gButtonPressed[1] = 1;
 
 	if (gMouseFunc != nil)
@@ -525,7 +525,7 @@ char gLeftIsRight = 0;
 	char *chars;
 	[m_context makeCurrentContext];
 	doKeyboardEvent(theEvent, gKey, gSpecialKey, 1);
-	
+
 	/*
 	// We only support ASCII. Why not UTF-8? Well, slightly more complicated, and is it needed?
 	chars = (char *)[[theEvent characters] cStringUsingEncoding: NSMacOSRomanStringEncoding];
@@ -539,7 +539,7 @@ char gLeftIsRight = 0;
 		else
 			if (gKey != NULL) // Change 120913
 				gKey(chars[0], 0, 0); // TO DO: x and y
-		
+
 		gKeymap[(unsigned int)chars[0]] = 1;
 	}
 	*/
@@ -550,7 +550,7 @@ char gLeftIsRight = 0;
 	char *chars;
 	[m_context makeCurrentContext];
 	doKeyboardEvent(theEvent, gKeyUp, gSpecialKeyUp, 0);
-/*	
+/*
 	chars = (char *)[[theEvent characters] cStringUsingEncoding: NSMacOSRomanStringEncoding];
 	if (chars != NULL)
 	{
@@ -581,11 +581,11 @@ char gLeftIsRight = 0;
 	{
 		lastWidth = [theView frame].size.width;
 		lastHeight = [theView frame].size.height;
-		
+
 		// Only needed on resize:
 		[m_context clearDrawable];
 //		glViewport(0, 0, [theView frame].size.width, [theView frame].size.height);
-		
+
 		if (gReshape != NULL)
 		{
 			[m_context setView: theView]; // Make the view current in case gReshape calls OpenGL
@@ -593,15 +593,15 @@ char gLeftIsRight = 0;
 			gReshape([theView frame].size.width, [theView frame].size.height);
 		}
 	}
-	
+
 	[m_context setView: theView];
 	[m_context makeCurrentContext];
-	
+
 	// Draw
 	updatePending = 0; // Did not help
 	if (gDisplay != NULL)
 		gDisplay();
-	
+
 	[m_context flushBuffer];
 //	[NSOpenGLContext clearCurrentContext];
 }
@@ -659,7 +659,7 @@ NSView	*view;
 -(void)timerFireMethod:(NSTimer *)t;
 {
 	TimerInfoRec *tr;
-	
+
 	if (t.userInfo != nil) // One-shot timer with a TimerInfoRec
 	{
 		tr = t.userInfo;
@@ -740,31 +740,31 @@ void CreateMenu()
 	// Create the custom menu
 	theMiniMenu = NSMenu.alloc;
 	[theMiniMenu initWithTitle: @"The MiniMenu"];
-	
+
 	// Create a menu item with standard message
 	menuItem2 = NSMenuItem.alloc;
 	[menuItem2 initWithTitle: @"Hide" action: @selector(hide:) keyEquivalent: @"h"];
 	[menuItem2 setKeyEquivalentModifierMask: NSCommandKeyMask];
 	[theMiniMenu addItem: menuItem2];
-	
+
 	// Create a menu item with standard message
 	menuItem2 = NSMenuItem.alloc;
 	[menuItem2 initWithTitle: @"Hide others" action: @selector(hideOtherApplications:) keyEquivalent: @"h"];
 	[menuItem2 setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
 	[theMiniMenu addItem: menuItem2];
-	
+
 	// Create a menu item with standard message
 	menuItem2 = NSMenuItem.alloc;
 	[menuItem2 initWithTitle: @"Show all" action: @selector(unhideAllApplications:) keyEquivalent: @"h"];
 	[menuItem2 setKeyEquivalentModifierMask: NSCommandKeyMask | NSControlKeyMask];
 	[theMiniMenu addItem: menuItem2];
-	
+
 	// Create a menu item with standard message
 	menuItem2 = NSMenuItem.alloc;
 	[menuItem2 initWithTitle: @"Quit" action: @selector(terminate:) keyEquivalent: @"q"];
 	[menuItem2 setKeyEquivalentModifierMask: NSCommandKeyMask];
 	[theMiniMenu addItem: menuItem2];
-	
+
 	// Adding a menu is done with a dummy item to connect the menu to its parent
 	dummyItem = NSMenuItem.alloc;
 	[dummyItem initWithTitle: @"" action: nil keyEquivalent: @""];
@@ -777,16 +777,16 @@ void glutInit(int *argcp, char **argv)
 {
 	pool = [NSAutoreleasePool new];
 	myApp = [MGApplication sharedApplication];
-	
-	[NSApp setActivationPolicy: NSApplicationActivationPolicyRegular]; // Thanks to Marcus StenbŠck
-	
+
+	[NSApp setActivationPolicy: NSApplicationActivationPolicyRegular]; // Thanks to Marcus Stenbï¿½ck
+
 	gRunning = 1;
 	home();
 	gettimeofday(&timeStart, NULL);
 	CreateMenu();
 	myTimerController = [TimerController alloc];
-	
-	
+
+
 	// Apple REALLY doesn't like us to mess with the mouse pointer. Now this is deprecated...
 	// and some sources say it isn't needed.
 //	CGSetLocalEventsSuppressionInterval(0.0); // For glutWarpPointer
@@ -813,13 +813,13 @@ void glutInitWindowSize (int width, int height)
 int glutCreateWindow (char *windowTitle)
 {
 	NSRect frame = NSMakeRect(gWindowPosX, NSScreen.mainScreen.frame.size.height - gWindowPosY-gWindowHeight, gWindowWidth, gWindowHeight);
-	
+
 	window = [NSWindow alloc];
 	[window initWithContentRect:frame
 					styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
 					backing:NSBackingStoreBuffered
 					defer:false];
-	
+
 	[window setTitle: [[NSString alloc] initWithCString:windowTitle
 				encoding:NSMacOSRomanStringEncoding]];
 	strcpy(gTitle, windowTitle); // Save title in case of full screen (which clears it)
@@ -854,7 +854,7 @@ void oglutMainLoop()
 	{
 		[pool release];
 		pool = [NSAutoreleasePool new];
-		
+
 		if (updatePending || gIdle != NULL) // If it is, then the setNeedsDisplay below has been called and we will get an update event - but must not block!
 		// (If there was an update coming I think it should not block, but at least this works.)
 		event = [myApp nextEventMatchingMask: NSAnyEventMask
@@ -868,14 +868,14 @@ void oglutMainLoop()
 							inMode: NSDefaultRunLoopMode
 							dequeue: true
 							];
-		
+
 		[myApp sendEvent: event];
 		[myApp updateWindows];
-	
+
 		if (gIdle != NULL)
 			if (!updatePending)
 				gIdle();
-		
+
 		// Did not help
 		if (updatePending)
 			[theView setNeedsDisplay: YES];
@@ -888,11 +888,11 @@ char finished = 0;
 void internalCheckLoop()
 {
 	NSEvent *event;
-	
+
 //	[myApp runOnce]; // ???
-	
+
 	pool = [NSAutoreleasePool new];
-	
+
 	if (updatePending || gIdle != NULL || !inMainLoop) // If it is, then the setNeedsDisplay below has been called and we will get an update event - but must not block!
 	// (If there was an update coming I think it should not block, but at least this works.)
 		event = [myApp nextEventMatchingMask: NSAnyEventMask
@@ -906,14 +906,14 @@ void internalCheckLoop()
 						inMode: NSDefaultRunLoopMode
 						dequeue: true
 						];
-	
+
 	[myApp sendEvent: event];
 	[myApp updateWindows];
 
 	if (gIdle != NULL)
 		if (!updatePending)
 			gIdle();
-	
+
 	// Did not help?
 	if (updatePending)
 		[theView setNeedsDisplay: YES];
@@ -923,7 +923,7 @@ void internalCheckLoop()
 void glutCheckLoop()
 {
 	inMainLoop = 0;
-	
+
 //	if (!inMainLoop) [window setContentView: view]; // Why isn't this a job for window creation???
 	if (!finished)
 	{
@@ -1046,7 +1046,7 @@ void glutSwapBuffers()
 int glutGet(int type)
 {
 	struct timeval tv;
-	
+
 	switch (type)
 	{
 	case GLUT_QUIT_FLAG:
@@ -1092,7 +1092,7 @@ void glutReshapeWindow(int width, int height)
 		[window setFrame: gSavedWindowPosition display: true];
 		gFullScreen = 0;
 	}
-	
+
 	r = [window frame];
 	r.size.width = width;
 	r.size.height = height;
@@ -1110,7 +1110,7 @@ void glutPositionWindow(int x, int y)
 		[window setFrame: gSavedWindowPosition display: true];
 		gFullScreen = 0;
 	}
-	
+
 	r = [window frame];
 	r.origin.x = x;
 	r.origin.y = NSScreen.mainScreen.frame.size.height - gWindowPosY - r.size.height;
@@ -1163,14 +1163,14 @@ void glutWarpPointer(int x, int y)
 	NSPoint mp, mp1;
 	CGPoint pt;
 	NSRect r;
-	
+
 	mp.x = 0; mp.y = 0;
 //	mp = [window convertBaseToScreen: mp];
 
 // Deprecation hell below:
 //The NSWindow class provides these methods for converting between window local coordinates and screen global coordinates:
-//	¥	convertRectToScreen:
-//	¥	convertRectFromScreen:
+//	ï¿½	convertRectToScreen:
+//	ï¿½	convertRectFromScreen:
 //Use them instead of the deprecated convertBaseToScreen: and convertScreenToBase: methods.
 	NSRect mpmp;
 	mpmp.size.height = 0;
@@ -1189,7 +1189,7 @@ void glutWarpPointer(int x, int y)
 	pt.x = x + mp.x;
 	pt.y = y - r.size.height + mp.y;
 //	PostMouseEvent( 1, kCGEventMouseMoved, pt);
-	
+
 //	CGSetLocalEventsSuppressionInterval(0.0); -> glutInit
 
 	CGWarpMouseCursorPosition(pt);
@@ -1221,7 +1221,7 @@ void glutFullScreen()
 	if (gFullScreen == 0)
 	{
 		gFullScreen = 1;
-		
+
 		gSavedWindowPosition = [window frame];
 		[NSMenu setMenuBarVisible: FALSE];
 		[window setStyleMask: NSBorderlessWindowMask];
