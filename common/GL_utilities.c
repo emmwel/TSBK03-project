@@ -396,14 +396,18 @@ FBOstruct *initNoiseFBO(int width, int height, int int_method)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	}
 
-	float *numbers[256*256*4]; // create RGBA values
+	float *numbers = malloc(width*height*4*sizeof(float)); // create RGBA values
 
-	for (int i = 0; i < 256*256*4; ++i) {
-		float f = 1.0f;
-		numbers[i] = &f;
+	// generate values
+	for (int i = 0; i < width*height*4; i += 4) {
+		numbers[i] = (float)rand()/(float)(RAND_MAX/1.0);
+		numbers[i+1] = (float)rand()/(float)(RAND_MAX/1.0);
+		numbers[i+2] = (float)rand()/(float)(RAND_MAX/1.0);
+		numbers[i+3] = (float)rand()/(float)(RAND_MAX/1.0);
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, numbers);
+	// GL_FLOAT is important to be able to load the float data correctly
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, numbers);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo->texid, 0);
 
