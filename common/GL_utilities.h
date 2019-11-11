@@ -41,6 +41,8 @@ typedef struct
 	int width, height;
 } FBOstruct;
 
+float randomVal(float min, float max) ;
+
 FBOstruct *initFBO(int width, int height, int int_method);
 FBOstruct *initFBO2(int width, int height, int int_method, int create_depthimage);
 FBOstruct *initZeroFBO(int width, int height, int int_method);

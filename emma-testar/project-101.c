@@ -40,7 +40,7 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 100;
+int numParticles = 1000;
 float pixelSize;
 int whichTexture = 1;
 
@@ -138,7 +138,7 @@ void init(void)
 			squareIndices, 4, 6);
 
 	// initialize matrices
-	vec3 cam = SetVector(0, 5, 15);
+	vec3 cam = SetVector(0, 0, 10);
 	vec3 point = SetVector(0, 1, 0);
 	vec3 up = {0, 1, 0};
 	viewMatrix = lookAtv(cam, point, up);

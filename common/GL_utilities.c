@@ -270,6 +270,13 @@ void CHECK_FRAMEBUFFER_STATUS()
 		fprintf(stderr, "Framebuffer not complete\n");
 }
 
+// generate random floats
+float randomVal(float min, float max) {
+	float random = (float)rand()/(float)(RAND_MAX);
+	float range = max - min;
+	return (random*range) + min;
+}
+
 // create FBO
 // FP buffer, suitable for HDR
 FBOstruct *initFBO(int width, int height, int int_method)
@@ -453,9 +460,10 @@ FBOstruct *initNoiseFBO(int width, int height, int int_method)
 
 	// generate values
 	for (int i = 0; i < width*height*4; i += 4) {
-		numbers[i] = (float)rand()/(float)(RAND_MAX/1.0);
-		numbers[i+1] = (float)rand()/(float)(RAND_MAX/1.0);
-		numbers[i+2] = (float)rand()/(float)(RAND_MAX/1.0);
+
+		numbers[i] = randomVal(-5.0, 5.0);
+		numbers[i+1] = 2.0;
+		numbers[i+2] = randomVal(-2.0, 0.0);
 		numbers[i+3] = (float)rand()/(float)(RAND_MAX/1.0);
 	}
 
