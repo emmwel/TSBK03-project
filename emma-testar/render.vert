@@ -18,7 +18,7 @@ void main(void)
 	exSurface = vec3(modelviewMatrix * vec4(in_Position, 1.0)); // Don't include projection here - we only want to go to view coordinates
 
     // get position from texture
-    vec4 newpos = in_Position + texture(texUnit, in_TexCoord);
+    vec4 newpos = vec4(in_Position, 1.0) + texture(texUnit, in_TexCoord);
 	//vec3 newpos = in_Position + vec3(0, 0.1*gl_InstanceID, 0);
-	gl_Position = projectionMatrix * modelviewMatrix * vec4(newpos, 1.0); // This should include projection
+	gl_Position = projectionMatrix * modelviewMatrix * newpos; // This should include projection
 }
