@@ -12,7 +12,7 @@ void main(void)
     vec4 curVel = texture(texUnitVelocity, outTexCoord);
 
     // calculate gravity forces
-    vec4 gravity = vec4(0, 9.82, 0, 1.0);
+    vec4 gravity = vec4(0, -0.1, 0, 1.0);
     vec4 acceleration = gravity;
 
     out_Color = curVel + deltaTime * acceleration;

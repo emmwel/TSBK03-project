@@ -7,6 +7,9 @@
 // gcc lab1-1.c ../common/*.c -lGL -o lab1-1 -I../common
 // Not working! -DGL_GLEXT_PROTOTYPES and more are missing. Use the makefile.
 
+// MAC
+// gcc lab1-1.c ../common/*.c ../common/Mac/MicroGlut.m -o lab1-1 -framework OpenGL -framework Cocoa -I../common/Mac -I../common -Wno-deprecated-declarations
+
 // 2018: No zpr, trackball code added in the main program.
 
 #include <stdio.h>
@@ -168,7 +171,7 @@ void display(void)
 	//  function will get called several times per second
 
 	// render to fbo1!
-	useFBO(0L, posfbo, 0L);
+	useFBO(fbo1, 0L, 0L);
 
 	// Clear framebuffer & zbuffer
 	glClearColor(0.1, 0.1, 0.3, 0);
@@ -199,18 +202,18 @@ void display(void)
 	// Done rendering the FBO! Set up for rendering on screen, using the result as texture!
 
 //	glFlush(); // Can cause flickering on some systems. Can also be necessary to make drawing complete.
-	// runfilter(trunktextureshader, fbo1, 0L, fbo2);
-	//
-	// int count = 0;
-	//
-	// while (count < 10) {
-	// 	// filter first x, then y
-	// 	runfilter(filter_xtextureshader, fbo2, 0L, fbo3);
-	// 	runfilter(filter_ytextureshader, fbo3, 0L, fbo2);
-	// 	++count;
-	// }
-	//
-	// runfilter(combiningshader, fbo2, fbo1, 0L);
+	runfilter(trunktextureshader, fbo1, 0L, fbo2);
+
+	int count = 0;
+
+	while (count < 10) {
+		// filter first x, then y
+		runfilter(filter_xtextureshader, fbo2, 0L, fbo3);
+		runfilter(filter_ytextureshader, fbo3, 0L, fbo2);
+		++count;
+	}
+
+	runfilter(combiningshader, fbo2, fbo1, 0L);
 
 	glutSwapBuffers();
 }

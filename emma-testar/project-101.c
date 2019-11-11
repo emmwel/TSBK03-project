@@ -24,7 +24,7 @@
 // Linux
 		#include <stdio.h>
 		#include <GL/gl.h>
-		#include "MicroGlut.h"
+		#include "MicroGlut.h"a
 //		#include <GL/glut.h>
 	#endif
 #endif
@@ -37,8 +37,10 @@
 #define W 512
 #define H 512
 
+void onTimer(int value);
+
 // particle amounts, pixel size
-int numParticles = 3;
+int numParticles = 100;
 float pixelSize;
 int whichTexture = 1;
 
@@ -47,7 +49,8 @@ FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2;
 GLuint minShader = 0,
        updatePosShader = 0,
 	   updateVelShader = 0,
-	   renderShader = 0;
+	   renderShader = 0,
+	   phongShader = 0;
 
 
 // Billboard to draw texture on
@@ -71,8 +74,6 @@ mat4 viewMatrix, modelToWorldMatrix;
 
 // Time to integrate in shader
 GLfloat deltaT, currentTime;
-
-void onTimer(int value);
 
 static double startTime = 0;
 
@@ -103,14 +104,14 @@ void onTimer(int value)
 
 void init(void)
 {
-    // Reference to shader program:
-    GLuint program;
-
 	dumpInfo();
 
     // GL inits
-    glClearColor(1.0,1.0,1.0,0); // sets to white color
-    glEnable(GL_DEPTH_TEST);
+	glClearColor(0.1, 0.1, 0.3, 0);
+	glClearDepth(1.0);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	printError("GL inits");
 
 	// initialize pixelSize
 	pixelSize = 1.0f / numParticles;
@@ -120,6 +121,7 @@ void init(void)
     updatePosShader = loadShaders("minimal.vert", "updatePos.frag");
 	updateVelShader = loadShaders("minimal.vert", "updateVel.frag");
 	renderShader = loadShaders("render.vert", "render.frag");
+	phongShader = loadShaders("phong.vert", "phong.frag");
     printError("init shader");
 
 	// initialize texture FBOs for simulation
@@ -141,6 +143,8 @@ void init(void)
 	vec3 up = {0, 1, 0};
 	viewMatrix = lookAtv(cam, point, up);
 	modelToWorldMatrix = IdentityMatrix();
+
+	//glutTimerFunc(20, &onTimer, 0);
 
 	resetElapsedTime();
 
@@ -165,10 +169,9 @@ void runShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out) {
 
 void display(void)
 {
-    useFBO(0L, positionTex1, 0L);
 
     // clear the screen
-    glClearColor(1.0,1.0,1.0,0); // sets to white color
+    glClearColor(0.1, 0.1, 0.3, 0); // sets to blue color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// fix matrices
@@ -180,46 +183,124 @@ void display(void)
 
 	// update particles
 	if (whichTexture == 1) {
-		//fprintf(stderr, "%f \n",deltaT);
+
 		runShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
 		runShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
+
+		// fbo to render from
+		useFBO(0L, positionTex2, 0L);
+
+		// Clear framebuffer & zbuffer
+		glClearColor(0.1, 0.1, 0.3, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// render to screen
 	    glUseProgram(renderShader);
 		glUniformMatrix4fv(glGetUniformLocation(renderShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 		glUniformMatrix4fv(glGetUniformLocation(renderShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
 	    glUniform1i(glGetUniformLocation(renderShader, "texUnit"), 0);
+		glUniform1f(glGetUniformLocation(renderShader, "pixelSize"), pixelSize);
 
-		useFBO(0L, positionTex2, 0L);
-		DrawModelInstanced(sphere, renderShader, "in_Position", "in_Normal", "in_TexCoord", numParticles);
+		// Enable Z-buffering
+		glEnable(GL_DEPTH_TEST);
+		// Enable backface culling
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
+		DrawModelInstanced(sphere, renderShader, "in_Position", "in_Normal", NULL, numParticles);
 
 		whichTexture = 2;
 	}
 	else {
-		//fprintf(stderr, "%i \n",2);
 		runShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
 		runShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
+
+		// fbo to render from
+		useFBO(0L, positionTex1, 0L);
+
+		// Clear framebuffer & zbuffer
+		glClearColor(0.1, 0.1, 0.3, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// render to screen
 	    glUseProgram(renderShader);
 		glUniformMatrix4fv(glGetUniformLocation(renderShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 		glUniformMatrix4fv(glGetUniformLocation(renderShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
 	    glUniform1i(glGetUniformLocation(renderShader, "texUnit"), 0);
+		glUniform1f(glGetUniformLocation(renderShader, "pixelSize"), pixelSize);
 
-		useFBO(0L, positionTex1, 0L);
-	    DrawModelInstanced(sphere, renderShader, "in_Position", "in_Normal", "in_TexCoord", numParticles);
+		// Enable Z-buffering
+		glEnable(GL_DEPTH_TEST);
+		// Enable backface culling
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
+	    DrawModelInstanced(sphere, renderShader, "in_Position", "in_Normal", NULL, numParticles);
 
 		whichTexture = 1;
 	}
 
-
-    glFlush();
     glutSwapBuffers();
+
+}
+
+void reshape(GLsizei w, GLsizei h)
+{
+	glViewport(0, 0, w, h);
+	GLfloat ratio = (GLfloat) w / (GLfloat) h;
+	projectionMatrix = perspective(90, ratio, 1.0, 1000);
+}
+
+
+// This function is called whenever the computer is idle
+// As soon as the machine is idle, ask GLUT to trigger rendering of a new
+// frame
+void idle()
+{
+  glutPostRedisplay();
+}
+
+// Trackball
+
+int prevx = 0, prevy = 0;
+
+void mouseUpDown(int button, int state, int x, int y)
+{
+	if (state == GLUT_DOWN)
+	{
+		prevx = x;
+		prevy = y;
+	}
+}
+
+void mouseDragged(int x, int y)
+{
+	vec3 p;
+	mat4 m;
+
+	// This is a simple and IMHO really nice trackball system:
+
+	// Use the movement direction to create an orthogonal rotation axis
+
+	p.y = x - prevx;
+	p.x = -(prevy - y);
+	p.z = 0;
+
+	// Create a rotation around this axis and premultiply it on the model-to-world matrix
+	// Limited to fixed camera! Will be wrong if the camera is moved!
+
+	m = ArbRotate(p, sqrt(p.x*p.x + p.y*p.y) / 50.0); // Rotation in view coordinates
+	modelToWorldMatrix = Mult(m, modelToWorldMatrix);
+
+	prevx = x;
+	prevy = y;
+
+	glutPostRedisplay();
 }
 
 int main(int argc, char *argv[])
 {
-    // initialize GLUT
+    //initialize GLUT
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
 	glutInitWindowSize(W, H);
@@ -228,10 +309,15 @@ int main(int argc, char *argv[])
 
     // display window and update every 20 ms
     glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
+	glutMouseFunc(mouseUpDown);
+	glutMotionFunc(mouseDragged);
+	glutIdleFunc(idle);
     glutTimerFunc(20, &onTimer, 0);
 
     // initalize
     init ();
     glutMainLoop();
     exit(0);
+
 }
