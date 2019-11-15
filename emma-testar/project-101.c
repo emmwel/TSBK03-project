@@ -66,7 +66,24 @@ GLfloat squareTexCoord[] = {
 							 1, 0};
 GLuint squareIndices[] = {0, 1, 2, 0, 2, 3};
 
-Model *squareModel, *sphere;
+// Collison plane
+
+// GLfloat plane[] = {
+// 	-10, 0, 10,
+// 	-10, 0, -10,
+// 	10, 0, -10,
+// 	10, 0, 10
+//
+// };
+//
+// GLfloat planeTexCoord[] = {
+// 							 0, 0,
+// 							 0, 1,
+// 							 1, 1,
+// 							 1, 0};
+// GLuint planeIndices[] = {0, 1, 2, 0, 2, 3};
+
+Model *squareModel, *planeModel, *sphere;
 
 // matrices for rendering
 mat4 projectionMatrix;
@@ -125,9 +142,9 @@ void init(void)
     printError("init shader");
 
 	// initialize texture FBOs for simulation
-    positionTex1 = initNoiseFBO(numParticles, 1, 0); // start positions
+    positionTex1 = initPositionsFBO(numParticles, 1, 0); // start positions
     positionTex2 = initZeroFBO(numParticles, 1, 0);
-    velocityTex1 = initZeroFBO(numParticles, 1, 0);
+    velocityTex1 = initVelocityFBO(numParticles, 1, 0);
     velocityTex2 = initZeroFBO(numParticles, 1, 0);
 
 	// load sphere
@@ -136,9 +153,14 @@ void init(void)
     squareModel = LoadDataToModel(
 			square, NULL, squareTexCoord, NULL,
 			squareIndices, 4, 6);
+	// planeModel = LoadDataToModel(
+	// 		plane, NULL, planeTexCoord, NULL,
+	// 		planeIndices, 4, 6);
+
+	planeModel = LoadModelPlus("plane.obj");
 
 	// initialize matrices
-	vec3 cam = SetVector(0, 0, 10);
+	vec3 cam = SetVector(0, 0, 150);
 	vec3 point = SetVector(0, 1, 0);
 	vec3 up = {0, 1, 0};
 	viewMatrix = lookAtv(cam, point, up);
@@ -209,6 +231,14 @@ void display(void)
 
 		DrawModelInstanced(sphere, renderShader, "in_Position", "in_Normal", NULL, numParticles);
 
+		glUseProgram(phongShader);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
+
+		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+
+
+
 		whichTexture = 2;
 	}
 	else {
@@ -236,6 +266,12 @@ void display(void)
 		glCullFace(GL_BACK);
 
 	    DrawModelInstanced(sphere, renderShader, "in_Position", "in_Normal", NULL, numParticles);
+
+		glUseProgram(phongShader);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
+
+		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
 		whichTexture = 1;
 	}

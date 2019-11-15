@@ -430,7 +430,7 @@ FBOstruct *initZeroFBO(int width, int height, int int_method)
 }
 
 
-FBOstruct *initNoiseFBO(int width, int height, int int_method)
+FBOstruct *initPositionsFBO(int width, int height, int int_method)
 {
 	FBOstruct *fbo = malloc(sizeof(FBOstruct));
 
@@ -461,10 +461,65 @@ FBOstruct *initNoiseFBO(int width, int height, int int_method)
 	// generate values
 	for (int i = 0; i < width*height*4; i += 4) {
 
-		numbers[i] = randomVal(-5.0, 5.0);
-		numbers[i+1] = 2.0;
-		numbers[i+2] = randomVal(-2.0, 0.0);
+		numbers[i] = randomVal(-10.0, 10.0);
+		numbers[i+1] = 20.0;
+		numbers[i+2] = randomVal(-10.0, 0.0);
 		numbers[i+3] = (float)rand()/(float)(RAND_MAX/1.0);
+	}
+
+	// GL_FLOAT is important to be able to load the float data correctly
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, numbers);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo->texid, 0);
+
+	// Renderbuffer
+	// initialize depth renderbuffer
+    glGenRenderbuffers(1, &fbo->rb);
+    glBindRenderbuffer(GL_RENDERBUFFER, fbo->rb);
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbo->width, fbo->height );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo->rb );
+    CHECK_FRAMEBUFFER_STATUS();
+
+	fprintf(stderr, "Framebuffer object %d\n", fbo->fb);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	return fbo;
+}
+
+FBOstruct *initVelocityFBO(int width, int height, int int_method)
+{
+	FBOstruct *fbo = malloc(sizeof(FBOstruct));
+
+	fbo->width = width;
+	fbo->height = height;
+
+	// create objects
+	glGenFramebuffers(1, &fbo->fb); // frame buffer id
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo->fb);
+	glGenTextures(1, &fbo->texid);
+	fprintf(stderr, "%i \n",fbo->texid);
+	glBindTexture(GL_TEXTURE_2D, fbo->texid);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	if (int_method == 0)
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+
+	float *numbers = malloc(width*height*4*sizeof(float)); // create RGBA values
+
+	// generate values
+	for (int i = 0; i < width*height*4; i += 4) {
+
+		numbers[i] = 0.0;
+		numbers[i+1] = randomVal(-1.0, 0.0);
+		numbers[i+2] = 0.0;
+		numbers[i+3] = 1.0;
 	}
 
 	// GL_FLOAT is important to be able to load the float data correctly
