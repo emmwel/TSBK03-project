@@ -32,6 +32,7 @@
 #include "VectorUtils3.h"
 #include "GL_utilities.h"
 #include "loadobj.h"
+#include "LoadTGA.h"
 
 // initial width and heights
 #define W 512
