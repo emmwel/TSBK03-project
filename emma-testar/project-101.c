@@ -55,7 +55,7 @@ GLuint minShader = 0,
 			 texShader = 0;
 GLfloat a = 0.0;
 vec3 forward = {0, 0, -4};
-vec3 cam = {0, 0, 150};
+vec3 cam = {0, 1, 10};
 vec3 point = {0, 1, 0};
 vec3 up = {0, 1, 0};
 
@@ -86,7 +86,7 @@ GLfloat quadTexcoords[] = {	0.0f, 1.0f,
 						0.0f, 0.0f};
 GLuint quadIndices[] = {	0,3,2, 0,2,1};
 
-Model *squareModel, *hailModel, *planeModel, *sphere;
+Model *squareModel, *hailModel, *planeModel;//, *sphere;
 
 // matrices for rendering
 mat4 projectionMatrix, viewMatrix, modelToWorldMatrix;
@@ -154,7 +154,7 @@ void init(void)
   velocityTex2 = initZeroFBO(numParticles, 1, 0);
 
 	// load sphere
-	sphere = LoadModelPlus("sphere.obj");
+	// sphere = LoadModelPlus("sphere.obj");
 
   squareModel = LoadDataToModel(
 		squareVertices, NULL, squareTexCoord, NULL,
@@ -199,99 +199,105 @@ void display(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// fix matrices
-	mat4 vm2;
+	mat4 worldToView, vm2, m;
 	vm2 = Mult(viewMatrix, modelToWorldMatrix);
 	vm2 = Mult(vm2, T(0, -8.5, 0));
 	vm2 = Mult(vm2, S(80,80,80));
 
-	//update particles
-	if (whichTexture == 1) {
-		// --------- Run physics calculations ---------
-		runShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
-		runShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
+	worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
+	a += 0.1;
+	m = Mult(worldToView, Mult(T(-1, 0.5, 0), Mult(Ry(-a),Rz(M_PI/8))));
+	m = T(m.m[3], m.m[7], m.m[11]);
 
-		// --------- Render result ---------
-		useFBO(0L, positionTex2, 0L);
 
-		// Clear framebuffer & zbuffer
-		glClearColor(0.1, 0.1, 0.3, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// render to screen
-		glBindTexture(GL_TEXTURE_2D, hailtex);
-    glUseProgram(texShader);
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
-		glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
-		glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
-		glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
-
-		// Enable Z-buffering
-		glEnable(GL_DEPTH_TEST);
-		// Enable backface culling
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
-		DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
-
-		glUseProgram(phongShader);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
-
-		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
-
-		whichTexture = 2;
-	}
-	else {
-		runShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
-		runShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
-
-		// fbo to render from
-		useFBO(0L, positionTex1, 0L);
-
-		// Clear framebuffer & zbuffer
-		glClearColor(0.1, 0.1, 0.3, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// render to screen
-		glBindTexture(GL_TEXTURE_2D, hailtex);
-    glUseProgram(texShader);
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
-		glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
-		glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
-		glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
-
-		// Enable Z-buffering
-		glEnable(GL_DEPTH_TEST);
-		// Enable backface culling
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
-    DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
-
-		glUseProgram(phongShader);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
-
-		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
-
-		whichTexture = 1;
-	}
+	// // Update particles
+	// if (whichTexture == 1) {
+	// 	// --------- Run physics calculations ---------
+	// 	// runShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
+	// 	// runShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
+	//
+	// 	// --------- Render result ---------
+	// 	useFBO(0L, positionTex2, 0L);
+	//
+	// 	// Clear framebuffer & zbuffer
+	// 	glClearColor(0.1, 0.1, 0.3, 0);
+	// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//
+	// 	// render to screen
+	// 	glBindTexture(GL_TEXTURE_2D, hailtex);
+  //   glUseProgram(texShader);
+	// 	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	// 	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	// 	glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
+	// 	glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
+	// 	glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
+	//
+	// 	// Enable Z-buffering
+	// 	glEnable(GL_DEPTH_TEST);
+	// 	// Enable backface culling
+	// 	glEnable(GL_CULL_FACE);
+	// 	glCullFace(GL_BACK);
+	//
+	// 	DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
+	//
+	// 	glUseProgram(phongShader);
+	// 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	// 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
+	//
+	// 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+	//
+	// 	whichTexture = 2;
+	// }
+	// else {
+	// 	// runShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
+	// 	// runShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
+	//
+	// 	// fbo to render from
+	// 	useFBO(0L, positionTex1, 0L);
+	//
+	// 	// Clear framebuffer & zbuffer
+	// 	glClearColor(0.1, 0.1, 0.3, 0);
+	// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//
+	// 	// render to screen
+	// 	glBindTexture(GL_TEXTURE_2D, hailtex);
+	// 	glUseProgram(texShader);
+	// 	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	// 	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	// 	glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
+	// 	glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
+	// 	glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
+	//
+	// 	// Enable Z-buffering
+	// 	glEnable(GL_DEPTH_TEST);
+	// 	// Enable backface culling
+	// 	glEnable(GL_CULL_FACE);
+	// 	glCullFace(GL_BACK);
+	//
+  //   DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
+	//
+	// 	glUseProgram(phongShader);
+	// 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	// 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
+	//
+	// 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+	//
+	// 	whichTexture = 1;
+	// }
 
 	// BILLBIARD HAIL
 	// a += 0.1;
-	// worldToView = lookAtv(cam, VectorAdd(cam, forward), up);;
-	// glBindTexture(GL_TEXTURE_2D, hailtex);
-	// // Billboard
-	// glUseProgram(texShader);
-	// // m = Mult(worldToView, Mult(T(-1, 0.5, 0), Mult(Ry(-a),Rz(M_PI/8))));
-	// // Modify m!
-	// // View plane oriented billboard: Zap rotation!
-	// // m = T(m.m[3], m.m[7], m.m[11]);
-	// glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	// glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
-	// DrawModel(hailModel, texShader, "inPosition", NULL, "inTexCoord");
+	// worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
+	glBindTexture(GL_TEXTURE_2D, hailtex);
+	// Billboard
+	glUseProgram(texShader);
+	// m = Mult(worldToView, Mult(T(-1, 0.5, 0), Mult(Ry(-a),Rz(M_PI/8))));
+	// Modify m!
+	// View plane oriented billboard: Zap rotation!
+	// m = T(m.m[3], m.m[7], m.m[11]);
+	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	DrawModel(hailModel, texShader, "in_Position", NULL, "in_TexCoord");
 
 	printError("display");
   glutSwapBuffers();
