@@ -199,14 +199,10 @@ void display(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// fix matrices
-	mat4 vm2, vmhail;
+	mat4 vm2;
 	vm2 = Mult(viewMatrix, modelToWorldMatrix);
 	vm2 = Mult(vm2, T(0, -8.5, 0));
 	vm2 = Mult(vm2, S(80,80,80));
-
-	// vmhail = Mult(viewMatrix, modelToWorldMatrix);
-	// vmhail = Mult(vmhail, T(0, -8.5, 0));
-	// vmhail = Mult(vmhail, S(250,250,250));
 
 	//update particles
 	if (whichTexture == 1) {
@@ -225,7 +221,6 @@ void display(void)
 		glBindTexture(GL_TEXTURE_2D, hailtex);
     glUseProgram(texShader);
 		glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		// glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, vmhail.m);
 		glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
 		glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
 		glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
@@ -262,7 +257,6 @@ void display(void)
 		glBindTexture(GL_TEXTURE_2D, hailtex);
     glUseProgram(texShader);
 		glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		// glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, vmhail.m);
 		glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
 		glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
 		glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
