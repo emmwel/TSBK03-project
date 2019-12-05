@@ -41,7 +41,7 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 100;
+int numParticles = 10000;
 float pixelSize;
 int whichTexture = 1;
 
@@ -55,7 +55,7 @@ GLuint minShader = 0,
 	   texShader = 0;
 GLfloat a = 0.0;
 vec3 forward = {0, 0, -1};
-vec3 cam = {0, 5, 10};
+vec3 cam = {0, 15, 75};
 vec3 point = {0, 1, 0};
 vec3 up = {0, 1, 0};
 
@@ -64,10 +64,10 @@ GLuint hailtex;
 
 // Billboard to draw texture on
 GLfloat squareVertices[] = {
-							-1,-1,0,
-							-1,1, 0,
-							1,1, 0,
-							1,-1, 0};
+							-1.0,-1.0,0,
+							-1.0,1.0, 0,
+							1.0,1.0, 0,
+							1.0,-1.0, 0};
 GLfloat squareTexCoord[] = {
 							 0, 0,
 							 0, 1,
@@ -135,14 +135,14 @@ void init(void)
 	// initialize pixelSize
 	pixelSize = 1.0f / numParticles;
 
-    // Load and compile shaders
-  	minShader = loadShaders("minimal.vert", "minimal.frag");
-  	updatePosShader = loadShaders("minimal.vert", "updatePos.frag");
+  // Load and compile shaders
+	minShader = loadShaders("minimal.vert", "minimal.frag");
+	updatePosShader = loadShaders("minimal.vert", "updatePos.frag");
 	updateVelShader = loadShaders("minimal.vert", "updateVel.frag");
 	renderShader = loadShaders("render.vert", "render.frag");
 	phongShader = loadShaders("phong.vert", "phong.frag");
 	texShader = loadShaders("textured.vert", "textured.frag");
-  	printError("init shader");
+	printError("init shader");
 
 	//textures
 	LoadTGATextureSimple("hail-texture.tga", &hailtex);
@@ -196,21 +196,15 @@ void runShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out) {
 void display(void)
 {
   // clear the screen
-  glClearColor(0.1, 0.1, 0.3, 0); // sets to blue color
+  glClearColor(0.1, 0.1, 0.3, 0); // sets background to blue color
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// fix matrices
-	mat4 worldToView, vm2, m;
-	vm2 = Mult(viewMatrix, modelToWorldMatrix);
-	vm2 = Mult(vm2, T(0, -8.5, 0));
-	vm2 = Mult(vm2, S(80,80,80));
-
-	worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
+	mat4 worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
 	a += 0.1;
-	m = Mult(worldToView, modelToWorldMatrix);
+	mat4 m = Mult(worldToView, modelToWorldMatrix);
 	m = Mult(worldToView, Mult(T(-1, 0.5, 0), Mult(Ry(-a),Rz(M_PI/8))));
 	m = T(m.m[3], m.m[7], m.m[11]);
-
 
 	// Update particles
 	if (whichTexture == 1) {
@@ -220,28 +214,6 @@ void display(void)
 
 		// Use position texture
 		useFBO(0L, positionTex2, 0L);
-
-		// Bind hailstone appearance texture
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, hailtex);
-
-		// Activate shader
-		glUseProgram(texShader);
-
-		// Upload variables to shader
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
-		glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
-		glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
-		glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
-		DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
-
-		// Render plane
-		glUseProgram(phongShader);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
-
-		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
 		// Switch which position texture to render from
 		whichTexture = 2;
@@ -254,31 +226,32 @@ void display(void)
 		// Use position texture
 		useFBO(0L, positionTex1, 0L);
 
-		// Bind hailstone appearance texture
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, hailtex);
-
-		// Activate shader
-		glUseProgram(texShader);
-
-		// Upload variables to shader
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
-		glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
-		glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
-		glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
-		DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
-
-		// Render plane
-		glUseProgram(phongShader);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
-
-		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
-
 		// Switch which position texture to render from
 		whichTexture = 1;
 	}
+
+	// Bind hailstone appearance texture
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, hailtex);
+
+	// Activate shader
+	glUseProgram(texShader);
+	glEnable(GL_DEPTH_TEST);
+
+	// Upload variables to shader
+	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
+	glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
+	glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
+	DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
+
+	// Render plane
+	glUseProgram(phongShader);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+
+	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
 	printError("display");
   glutSwapBuffers();
