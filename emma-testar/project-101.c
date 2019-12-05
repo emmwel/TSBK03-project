@@ -49,11 +49,10 @@ bool firstTexture = true;
 FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2;
 GLuint minShader = 0,
        updatePosShader = 0,
-	   updateVelShader = 0,
-	   renderShader = 0,
-	   phongShader = 0,
-	   texShader = 0;
-GLfloat a = 0.0;
+		   updateVelShader = 0,
+		   renderShader = 0,
+		   phongShader = 0,
+		   texShader = 0;
 vec3 forward = {0, 0, -1};
 vec3 cam = {0, 15, 75};
 vec3 point = {0, 1, 0};
@@ -89,7 +88,7 @@ GLuint quadIndices[] = {	0,3,2, 0,2,1};
 Model *squareModel, *hailModel, *planeModel, *sphere;
 
 // matrices for rendering
-mat4 projectionMatrix, viewMatrix, modelToWorldMatrix;
+mat4 projectionMatrix, viewMatrix, modelToWorldMatrix, worldToView, m;
 
 // Time to integrate in shader
 GLfloat deltaT, currentTime;
@@ -200,10 +199,9 @@ void display(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// fix matrices
-	mat4 worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
-	a += 0.1;
-	mat4 m = Mult(worldToView, modelToWorldMatrix);
-	m = Mult(worldToView, Mult(T(-1, 0.5, 0), Mult(Ry(-a),Rz(M_PI/8))));
+	worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
+	m = Mult(worldToView, modelToWorldMatrix);
+	m = Mult(worldToView, Mult(T(-1, 0.5, 0), IdentityMatrix()));
 	m = T(m.m[3], m.m[7], m.m[11]);
 
 	// Update particles
