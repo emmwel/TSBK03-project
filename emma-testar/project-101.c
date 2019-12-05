@@ -43,7 +43,7 @@ void onTimer(int value);
 // particle amounts, pixel size
 int numParticles = 10000;
 float pixelSize;
-int whichTexture = 1;
+bool firstTexture = true;
 
 // Globals
 FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2;
@@ -207,16 +207,13 @@ void display(void)
 	m = T(m.m[3], m.m[7], m.m[11]);
 
 	// Update particles
-	if (whichTexture == 1) {
+	if (firstTexture == 1) {
 		// --------- Run physics calculations ---------
 		runShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
 		runShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
 
 		// Use position texture
 		useFBO(0L, positionTex2, 0L);
-
-		// Switch which position texture to render from
-		whichTexture = 2;
 	}
 	else {
 		// --------- Run physics calculations ---------
@@ -225,10 +222,9 @@ void display(void)
 
 		// Use position texture
 		useFBO(0L, positionTex1, 0L);
-
-		// Switch which position texture to render from
-		whichTexture = 1;
 	}
+	// Switch which position texture to render from
+	firstTexture = !firstTexture;
 
 	// Bind hailstone appearance texture
 	glActiveTexture(GL_TEXTURE1);
