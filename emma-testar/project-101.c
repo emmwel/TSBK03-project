@@ -88,7 +88,7 @@ GLuint quadIndices[] = {	0,3,2, 0,2,1};
 Model *squareModel, *hailModel, *planeModel, *sphere;
 
 // matrices for rendering
-mat4 projectionMatrix, viewMatrix, modelToWorldMatrix, worldToView, m;
+mat4 projectionMatrix, viewMatrix, modelToWorldMatrix, worldToView, m, m_plane;
 
 // Time to integrate in shader
 GLfloat deltaT, currentTime;
@@ -152,25 +152,18 @@ void init(void)
   	velocityTex1 = initVelocityFBO(numParticles, 1, 0);
   	velocityTex2 = initZeroFBO(numParticles, 1, 0);
 
-	// load sphere
-	sphere = LoadModelPlus("sphere.obj");
-
-  	squareModel = LoadDataToModel(
+	// Load models
+	squareModel = LoadDataToModel(
 		squareVertices, NULL, squareTexCoord, NULL,
 		squareIndices, 4, 6);
-
 	hailModel = LoadDataToModel(
 		quadVertices, NULL, quadTexcoords, NULL,
 		quadIndices, 4, 6);
-
-	planeModel = LoadModelPlus("plane.obj");
+	planeModel = LoadModelPlus("plane-and-objects.obj");
 
 	// initialize matrices
-
 	viewMatrix = lookAtv(cam, point, up);
 	modelToWorldMatrix = IdentityMatrix();
-
-	//glutTimerFunc(20, &onTimer, 0);
 
 	resetElapsedTime();
 }
@@ -203,6 +196,7 @@ void display(void)
 	m = Mult(worldToView, modelToWorldMatrix);
 	m = Mult(worldToView, Mult(T(-1, 0.5, 0), IdentityMatrix()));
 	m = T(m.m[3], m.m[7], m.m[11]);
+	m_plane = Mult(m, S(10.0, 10.0, 10.0));
 
 	// Update particles
 	if (firstTexture == 1) {
@@ -243,7 +237,7 @@ void display(void)
 	// Render plane
 	glUseProgram(phongShader);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
 
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
