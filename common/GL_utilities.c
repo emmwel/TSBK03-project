@@ -462,9 +462,9 @@ FBOstruct *initPositionsFBO(int width, int height, int int_method)
 	for (int i = 0; i < width*height*4; i += 4) {
 
 		numbers[i] = randomVal(-10.0, 10.0);
-		numbers[i+1] = 20.0;
-		numbers[i+2] = randomVal(-10.0, 0.0);
-		numbers[i+3] = (float)rand()/(float)(RAND_MAX/1.0);
+		numbers[i+1] = randomVal(0, 10.0);
+		numbers[i+2] = randomVal(-1.0, 0.0);
+		numbers[i+3] = 1.0f;
 	}
 
 	// GL_FLOAT is important to be able to load the float data correctly
@@ -516,10 +516,10 @@ FBOstruct *initVelocityFBO(int width, int height, int int_method)
 	// generate values
 	for (int i = 0; i < width*height*4; i += 4) {
 
-		numbers[i] = 0.0;
-		numbers[i+1] = randomVal(-1.0, 0.0);
-		numbers[i+2] = 0.0;
-		numbers[i+3] = 1.0;
+		numbers[i] = 0.0f;
+		numbers[i+1] = 0.0f; //randomVal(-1.0, 0.0);
+		numbers[i+2] = 0.0f;
+		numbers[i+3] = 1.0f;
 	}
 
 	// GL_FLOAT is important to be able to load the float data correctly

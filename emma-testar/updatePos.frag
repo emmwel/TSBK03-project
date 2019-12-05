@@ -12,5 +12,6 @@ void main(void)
     vec4 curPos = texture(texUnitPosition, outTexCoord);
     vec4 curVel = texture(texUnitVelocity, outTexCoord);
 
-    out_Color = curPos +  deltaTime * curVel;
+    //out_Color = curPos - deltaTime * vec4(0.0, 0.1, 0.0, 0.0); // + deltaTime * curVel;
+    out_Color = curPos + deltaTime * curVel;
 }

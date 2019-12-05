@@ -41,7 +41,7 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 30;
+int numParticles = 10;
 float pixelSize;
 int whichTexture = 1;
 
@@ -49,12 +49,12 @@ int whichTexture = 1;
 FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2;
 GLuint minShader = 0,
        updatePosShader = 0,
-		   updateVelShader = 0,
-		   renderShader = 0,
-		   phongShader = 0,
-			 texShader = 0;
+	   updateVelShader = 0,
+	   renderShader = 0,
+	   phongShader = 0,
+	   texShader = 0;
 GLfloat a = 0.0;
-vec3 forward = {0, 0, -4};
+vec3 forward = {0, 0, -1};
 vec3 cam = {0, 1, 10};
 vec3 point = {0, 1, 0};
 vec3 up = {0, 1, 0};
@@ -125,7 +125,7 @@ void init(void)
 {
 	dumpInfo();
 
-  // GL inits
+  	// GL inits
 	glClearColor(0.1, 0.1, 0.3, 0);
 	glClearDepth(1.0);
 	glEnable(GL_DEPTH_TEST);
@@ -136,22 +136,22 @@ void init(void)
 	pixelSize = 1.0f / numParticles;
 
     // Load and compile shaders
-  minShader = loadShaders("minimal.vert", "minimal.frag");
-  updatePosShader = loadShaders("minimal.vert", "updatePos.frag");
+  	minShader = loadShaders("minimal.vert", "minimal.frag");
+  	updatePosShader = loadShaders("minimal.vert", "updatePos.frag");
 	updateVelShader = loadShaders("minimal.vert", "updateVel.frag");
 	renderShader = loadShaders("render.vert", "render.frag");
 	phongShader = loadShaders("phong.vert", "phong.frag");
 	texShader = loadShaders("textured.vert", "textured.frag");
-  printError("init shader");
+  	printError("init shader");
 
 	//textures
 	LoadTGATextureSimple("hail-texture.tga", &hailtex);
 
 	// initialize texture FBOs for simulation
-  positionTex1 = initPositionsFBO(numParticles, 1, 0); // start positions
-  positionTex2 = initZeroFBO(numParticles, 1, 0);
-  velocityTex1 = initVelocityFBO(numParticles, 1, 0);
-  velocityTex2 = initZeroFBO(numParticles, 1, 0);
+  	positionTex1 = initPositionsFBO(numParticles, 1, 0); // start positions
+  	positionTex2 = initZeroFBO(numParticles, 1, 0);
+  	velocityTex1 = initVelocityFBO(numParticles, 1, 0);
+  	velocityTex2 = initZeroFBO(numParticles, 1, 0);
 
 	// load sphere
 	sphere = LoadModelPlus("sphere.obj");
@@ -159,6 +159,7 @@ void init(void)
   	squareModel = LoadDataToModel(
 		squareVertices, NULL, squareTexCoord, NULL,
 		squareIndices, 4, 6);
+
 	hailModel = LoadDataToModel(
 		quadVertices, NULL, quadTexcoords, NULL,
 		quadIndices, 4, 6);
@@ -182,13 +183,13 @@ void runShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out) {
   // Many of these things would be more efficiently done once and for all
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
+  useFBO(out, in1, in2);
+
   glUniform1i(glGetUniformLocation(shader, "texUnitPosition"), 0);
   glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
   glUniform1f(glGetUniformLocation(shader, "deltaTime"), deltaT);
   glUniform1f(glGetUniformLocation(shader, "pixelSize"), pixelSize);
 
-
-  useFBO(out, in1, in2);
   DrawModel(squareModel, shader, "in_Position", NULL, "in_TexCoord");
 }
 
@@ -206,6 +207,7 @@ void display(void)
 
 	worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
 	a += 0.1;
+	m = Mult(worldToView, modelToWorldMatrix);
 	m = Mult(worldToView, Mult(T(-1, 0.5, 0), Mult(Ry(-a),Rz(M_PI/8))));
 	m = T(m.m[3], m.m[7], m.m[11]);
 
@@ -218,11 +220,11 @@ void display(void)
 		//
 		// // --------- Render result ---------
 		// useFBO(0L, positionTex2, 0L);
+		// //
+		// // Clear framebuffer & zbuffer
+		// glClearColor(0.1, 0.1, 0.3, 0);
+		// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//
-		// Clear framebuffer & zbuffer
-		glClearColor(0.1, 0.1, 0.3, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// // render as spheres
 		// glUseProgram(renderShader);
 		// glUniformMatrix4fv(glGetUniformLocation(renderShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
@@ -273,7 +275,7 @@ void display(void)
 
 		glUseProgram(phongShader);
 		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
 
 		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
@@ -285,12 +287,12 @@ void display(void)
 		//
 		// // fbo to render from
 		// useFBO(0L, positionTex1, 0L);
-		//
-		// Clear framebuffer & zbuffer
-		glClearColor(0.1, 0.1, 0.3, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		//
-		//
+		// //
+		// // Clear framebuffer & zbuffer
+		// glClearColor(0.1, 0.1, 0.3, 0);
+		// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// //
+		// //
 		// // render as spheres
 		// glUseProgram(renderShader);
 		// glUniformMatrix4fv(glGetUniformLocation(renderShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
@@ -341,7 +343,7 @@ void display(void)
 
 		glUseProgram(phongShader);
 		glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, vm2.m);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
 
 		DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
@@ -349,7 +351,7 @@ void display(void)
 	}
 
 	//BILLBIARD HAIL
-	a += 0.1;
+	// a += 0.1;
 	// worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
 	// // glActiveTexture(GL_TEXTURE0);
 	// // glBindTexture(GL_TEXTURE_2D, positionTex1->texid);
