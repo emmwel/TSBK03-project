@@ -46,7 +46,7 @@ float pixelSize;
 bool firstTexture = true;
 
 // Globals
-FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2;
+FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2, *depthBuffer;
 GLuint minShader = 0,
        updatePosShader = 0,
 		   updateVelShader = 0,
