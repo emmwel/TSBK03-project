@@ -6,5 +6,10 @@ out vec4 out_Color;
 
 void main(void)
 {
-    out_Color = texture(texUnit, outTexCoord);
+    float depth = texture(texUnit, outTexCoord).x;
+    float zNear = 1.0;
+    float zFar = 1000;
+    float c = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
+
+    out_Color = vec4(c, c, c, 1.0);
 }

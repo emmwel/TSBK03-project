@@ -152,6 +152,9 @@ void init(void)
   	velocityTex1 = initVelocityFBO(numParticles, 1, 0);
   	velocityTex2 = initZeroFBO(numParticles, 1, 0);
 
+	// create FBO which saves depth
+	depthBuffer = initFBO2(W, H, 0, 1);
+
 	// Load models
 	squareModel = LoadDataToModel(
 		squareVertices, NULL, squareTexCoord, NULL,
@@ -235,11 +238,24 @@ void display(void)
 	DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
 
 	// Render plane
+	//useFBO(depthBuffer, 0L, 0L);
 	glUseProgram(phongShader);
+	glEnable(GL_DEPTH_TEST);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
 
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+
+	// render depth image
+	// useFBO(0L, 0L, 0L);
+	// glActiveTexture(GL_TEXTURE0);
+	// glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
+	//
+	// glUseProgram(minShader);
+	// glUniform1i(glGetUniformLocation(texShader, "texUnit"), 0);
+	// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
+
+
 
 	printError("display");
   glutSwapBuffers();
