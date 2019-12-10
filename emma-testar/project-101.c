@@ -38,10 +38,13 @@
 #define W 800
 #define H 800
 
+// define PI for physics
+//#define M_PI 3.1415926535897932384626433832795
+
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 10000;
+int numParticles = 100;
 float pixelSize;
 bool firstTexture = true;
 
@@ -171,7 +174,7 @@ void init(void)
 	resetElapsedTime();
 }
 
-void runShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out) {
+void runPosShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out) {
 
   glUseProgram(shader);
 
@@ -184,6 +187,39 @@ void runShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out) {
   glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
   glUniform1f(glGetUniformLocation(shader, "deltaTime"), deltaT);
   glUniform1f(glGetUniformLocation(shader, "pixelSize"), pixelSize);
+
+  DrawModel(squareModel, shader, "in_Position", NULL, "in_TexCoord");
+}
+
+void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out) {
+
+  glUseProgram(shader);
+
+  // Many of these things would be more efficiently done once and for all
+  glDisable(GL_CULL_FACE);
+  glDisable(GL_DEPTH_TEST);
+  useFBO(out, in1, in2);
+
+  glUniform1i(glGetUniformLocation(shader, "texUnitPosition"), 0);
+  glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
+  glUniform1f(glGetUniformLocation(shader, "deltaTime"), deltaT);
+  glUniform1f(glGetUniformLocation(shader, "pixelSize"), pixelSize);
+
+  // particle defs for air resistance
+  float radius = 0.005; // in meters
+  float splitArea =  radius * radius * M_PI;
+  // particles modeled as spheres in air
+  float airDragCoefficient = 0.47;
+  // air density
+  float airDensity = 1.2;
+
+  // mass in kg
+  float mass = 2;
+  glUniform1f(glGetUniformLocation(shader, "splitArea"), splitArea);
+  glUniform1f(glGetUniformLocation(shader, "airDragCoefficient"), airDragCoefficient);
+  glUniform1f(glGetUniformLocation(shader, "airDensity"), airDensity);
+  glUniform1f(glGetUniformLocation(shader, "mass"), mass);
+
 
   DrawModel(squareModel, shader, "in_Position", NULL, "in_TexCoord");
 }
@@ -204,41 +240,41 @@ void display(void)
 	// Update particles
 	if (firstTexture == 1) {
 		// --------- Run physics calculations ---------
-		// runShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
-		// runShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
-		//
-		// // Use position texture
-		// useFBO(0L, positionTex2, 0L);
+		runPosShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
+		runVelShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
+
+		// Use position texture
+		useFBO(0L, positionTex2, 0L);
 	}
 	else {
 		// --------- Run physics calculations ---------
-		// runShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
-		// runShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
-		//
-		// // Use position texture
-		// useFBO(0L, positionTex1, 0L);
+		runPosShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
+		runVelShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
+
+		// Use position texture
+		useFBO(0L, positionTex1, 0L);
 	}
 	// Switch which position texture to render from
-	// firstTexture = !firstTexture;
-	//
-	// // Bind hailstone appearance texture
-	// glActiveTexture(GL_TEXTURE1);
-	// glBindTexture(GL_TEXTURE_2D, hailtex);
-	//
-	// // Activate shader
-	// glUseProgram(texShader);
-	// glEnable(GL_DEPTH_TEST);
-	//
-	// // Upload variables to shader
-	// glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	// glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
-	// glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
-	// glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
-	// glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
-	// DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
+	firstTexture = !firstTexture;
+
+	// Bind hailstone appearance texture
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, hailtex);
+
+	// Activate shader
+	glUseProgram(texShader);
+	glEnable(GL_DEPTH_TEST);
+
+	// Upload variables to shader
+	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
+	glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
+	glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
+	DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
 
 	// Render plane
-	useFBO(depthBuffer, 0L, 0L);
+	// useFBO(depthBuffer, 0L, 0L);
 	glUseProgram(phongShader);
 	glEnable(GL_DEPTH_TEST);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
@@ -247,13 +283,13 @@ void display(void)
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
 	// render depth image
-	useFBO(0L, 0L, 0L);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
-
-	glUseProgram(minShader);
-	glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
-	DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
+	// useFBO(0L, 0L, 0L);
+	// glActiveTexture(GL_TEXTURE0);
+	// glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
+	//
+	// glUseProgram(minShader);
+	// glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
+	// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
 
 
 

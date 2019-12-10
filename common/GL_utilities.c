@@ -462,7 +462,7 @@ FBOstruct *initPositionsFBO(int width, int height, int int_method)
 	for (int i = 0; i < width*height*4; i += 4) {
 
 		numbers[i] = randomVal(-100.0, 100.0);
-		numbers[i+1] = randomVal(5, 100.0);
+		numbers[i+1] = randomVal(90.0, 1000.0);
 		numbers[i+2] = randomVal(-50.0, 50.0);
 		numbers[i+3] = 1.0f;
 	}
@@ -517,7 +517,7 @@ FBOstruct *initVelocityFBO(int width, int height, int int_method)
 	for (int i = 0; i < width*height*4; i += 4) {
 
 		numbers[i] = 0.0f;
-		numbers[i+1] = 0.0f; //randomVal(-1.0, 0.0);
+		numbers[i+1] = randomVal(-5.0, -0.1);
 		numbers[i+2] = 0.0f;
 		numbers[i+3] = 1.0f;
 	}
