@@ -153,7 +153,7 @@ void init(void)
   	velocityTex2 = initZeroFBO(numParticles, 1, 0);
 
 	// create FBO which saves depth
-	depthBuffer = initFBO2(W, H, 0, 1);
+	depthBuffer = initFBO2(W, H, 0, 2);
 
 	// Load models
 	squareModel = LoadDataToModel(
@@ -204,41 +204,41 @@ void display(void)
 	// Update particles
 	if (firstTexture == 1) {
 		// --------- Run physics calculations ---------
-		runShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
-		runShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
-
-		// Use position texture
-		useFBO(0L, positionTex2, 0L);
+		// runShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
+		// runShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
+		//
+		// // Use position texture
+		// useFBO(0L, positionTex2, 0L);
 	}
 	else {
 		// --------- Run physics calculations ---------
-		runShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
-		runShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
-
-		// Use position texture
-		useFBO(0L, positionTex1, 0L);
+		// runShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
+		// runShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
+		//
+		// // Use position texture
+		// useFBO(0L, positionTex1, 0L);
 	}
 	// Switch which position texture to render from
-	firstTexture = !firstTexture;
-
-	// Bind hailstone appearance texture
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, hailtex);
-
-	// Activate shader
-	glUseProgram(texShader);
-	glEnable(GL_DEPTH_TEST);
-
-	// Upload variables to shader
-	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
-	glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
-	glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
-	glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
-	DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
+	// firstTexture = !firstTexture;
+	//
+	// // Bind hailstone appearance texture
+	// glActiveTexture(GL_TEXTURE1);
+	// glBindTexture(GL_TEXTURE_2D, hailtex);
+	//
+	// // Activate shader
+	// glUseProgram(texShader);
+	// glEnable(GL_DEPTH_TEST);
+	//
+	// // Upload variables to shader
+	// glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	// glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	// glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
+	// glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
+	// glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
+	// DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
 
 	// Render plane
-	//useFBO(depthBuffer, 0L, 0L);
+	useFBO(depthBuffer, 0L, 0L);
 	glUseProgram(phongShader);
 	glEnable(GL_DEPTH_TEST);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
@@ -247,13 +247,13 @@ void display(void)
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
 	// render depth image
-	// useFBO(0L, 0L, 0L);
-	// glActiveTexture(GL_TEXTURE0);
-	// glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
-	//
-	// glUseProgram(minShader);
-	// glUniform1i(glGetUniformLocation(texShader, "texUnit"), 0);
-	// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
+	useFBO(0L, 0L, 0L);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
+
+	glUseProgram(minShader);
+	glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
+	DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
 
 
 
@@ -320,16 +320,16 @@ int main(int argc, char *argv[])
   //initialize GLUT
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-	glutInitWindowSize(W, H);
+  glutInitWindowSize(W, H);
   glutInitContextVersion(3, 2); // modern OpenGL
   glutCreateWindow ("Hail simulation");
 
   // display window and update every 20 ms
   glutDisplayFunc(display);
-	glutReshapeFunc(reshape);
-	// glutMouseFunc(mouseUpDown);
-	// glutMotionFunc(mouseDragged);
-	glutIdleFunc(idle);
+  glutReshapeFunc(reshape);
+  // glutMouseFunc(mouseUpDown);
+  // glutMotionFunc(mouseDragged);
+  glutIdleFunc(idle);
   glutTimerFunc(20, &onTimer, 0);
 
   // initalize
