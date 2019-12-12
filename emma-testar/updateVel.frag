@@ -16,24 +16,36 @@ out vec4 out_Color;
 
 void main(void)
 {
-    vec4 curPos = texture(texUnitPosition, outTexCoord);
-    vec4 curVel = texture(texUnitVelocity, outTexCoord);
+  // Fetch position and velocity from textures
+  vec3 curPos = texture(texUnitPosition, outTexCoord).xyz;
+  vec3 curVel = texture(texUnitVelocity, outTexCoord).xyz;
 
-    float plane_y = 0.0 + 0.5;
+  // TEMPORARY define surface position
+  float plane_y = 0.0 + 0.5;
 
-    // calculate forces
-    vec4 gravityForce = mass * vec4(0, -9.82, 0, 0);
-    vec4 dragForce = 1/2 * airDragCoefficient * airDensity * splitArea * (curVel * curVel) * -1 * normalize(curVel);
+  // Separate velocity direction and magnitude
+  float curVelNorm = length(curVel);
+  vec3 curVelDirection = curVel / curVelNorm;
 
-    vec4 acceleration = (1/mass) * (gravityForce + dragForce);
+  // Calculate forces
+  vec3 gravityForce = mass * vec3(0, -50.0, 0);
+  // vec3 dragForce = -1/2 * airDragCoefficient * airDensity * splitArea * curVelNorm * curVelNorm * curVelDirection;
+  float dragConstants = 0.5;
+  vec3 dragForce = dragConstants * curVelNorm * curVelNorm * -curVelDirection;
 
-    vec4 newVel = curVel + deltaTime * acceleration;
+  // Calculate acceleration from forces
+  vec3 acceleration = (1/mass) * (gravityForce + dragForce);
 
-    vec4 newPos = curPos + deltaTime * newVel;
+  vec3 newVel = curVel + deltaTime * acceleration;
 
-    if (newPos.y < plane_y) {
-        newVel = 0.2 * -newVel;
-    }
+  // Check for collision with plane
+  vec3 newPos = curPos + deltaTime * newVel;
+  if (newPos.y < plane_y) {
+    vec3 normal = vec3(0.0, 1.0, 0.0);
+    vec3 impulse = 1.4 * normal * dot(normal, newVel);
+    newVel -= impulse;
+  }
 
-    out_Color = newVel;
+  // Calculate new velocity from acceleration
+  out_Color = vec4(newVel, 1.0);
 }

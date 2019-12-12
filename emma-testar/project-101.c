@@ -214,7 +214,7 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   float airDensity = 1.2;
 
   // mass in kg
-  float mass = 2;
+  float mass = 200;
   glUniform1f(glGetUniformLocation(shader, "splitArea"), splitArea);
   glUniform1f(glGetUniformLocation(shader, "airDragCoefficient"), airDragCoefficient);
   glUniform1f(glGetUniformLocation(shader, "airDensity"), airDensity);
