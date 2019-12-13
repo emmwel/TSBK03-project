@@ -57,8 +57,8 @@ GLuint minShader = 0,
 		   phongShader = 0,
 		   texShader = 0;
 vec3 forward = {0, 0, -1};
-vec3 cam = {0, 15, 75};
-vec3 point = {0, 1, 0};
+vec3 cam = {0, 25, 75};
+vec3 point = {0, 0, 0};
 vec3 up = {0, 1, 0};
 
 // texture
@@ -91,7 +91,7 @@ GLuint quadIndices[] = {	0,3,2, 0,2,1};
 Model *squareModel, *hailModel, *planeModel, *sphere;
 
 // matrices for rendering
-mat4 projectionMatrix, viewMatrix, modelToWorldMatrix, worldToView, m, m_plane;
+mat4 projectionMatrixPerspective, projectionMatrixOrthographic, viewMatrix, modelToWorldMatrix, worldToView, m, m_plane;
 
 // Time to integrate in shader
 GLfloat deltaT, currentTime;
@@ -149,11 +149,11 @@ void init(void)
 	//textures
 	LoadTGATextureSimple("hail-texture.tga", &hailtex);
 
-	// initialize texture FBOs for simulation
-  	positionTex1 = initPositionsFBO(numParticles, 1, 0); // start positions
-  	positionTex2 = initZeroFBO(numParticles, 1, 0);
-  	velocityTex1 = initVelocityFBO(numParticles, 1, 0);
-  	velocityTex2 = initZeroFBO(numParticles, 1, 0);
+	// Initialize texture FBOs for simulation
+	positionTex1 = initPositionsFBO(numParticles, 1, 0); // start positions
+	positionTex2 = initZeroFBO(numParticles, 1, 0);
+	velocityTex1 = initVelocityFBO(numParticles, 1, 0);
+	velocityTex2 = initZeroFBO(numParticles, 1, 0);
 
 	// create FBO which saves depth
 	depthBuffer = initFBO2(W, H, 0, 2);
@@ -228,16 +228,12 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 
 void display(void)
 {
-  // clear the screen
-  glClearColor(0.1, 0.1, 0.3, 0); // sets background to blue color
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// fix matrices
+  // Fix matrices
 	worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
 	m = Mult(worldToView, modelToWorldMatrix);
 	m = Mult(worldToView, Mult(T(-1, 0.5, 0), IdentityMatrix()));
 	m = T(m.m[3], m.m[7], m.m[11]);
-	m_plane = Mult(m, S(10.0, 10.0, 10.0));
+	m_plane = Mult(worldToView, S(10.0, 10.0, 10.0));
 
 	// Update particles
 	if (firstTexture == 1) {
@@ -270,7 +266,7 @@ void display(void)
 	glEnable(GL_DEPTH_TEST);
 
 	// Upload variables to shader
-	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
 	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
 	glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
 	glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
@@ -278,16 +274,23 @@ void display(void)
 	DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
 
 	// Render plane
-	// useFBO(depthBuffer, 0L, 0L);
-	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(phongShader);
 	glEnable(GL_DEPTH_TEST);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
-
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
-	// render depth image
+	// ---------------------- Render depth -------------------------------
+	// useFBO(depthBuffer, 0L, 0L);
+	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// glUseProgram(phongShader);
+	// glEnable(GL_DEPTH_TEST);
+	// glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
+	// glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
+	//
+	// DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+	//
+	// // Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// glActiveTexture(GL_TEXTURE0);
@@ -297,8 +300,6 @@ void display(void)
 	// glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
 	// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
 
-
-
 	printError("display");
   glutSwapBuffers();
 }
@@ -307,55 +308,18 @@ void reshape(GLsizei w, GLsizei h)
 {
 	glViewport(0, 0, w, h);
 	GLfloat ratio = (GLfloat) w / (GLfloat) h;
-	projectionMatrix = perspective(90, ratio, 1.0, 1000);
+	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000);
+	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1, 1000);
 }
 
-
-// This function is called whenever the computer is idle
-// As soon as the machine is idle, ask GLUT to trigger rendering of a new
-// frame
+// Necessary
 void idle()
 {
   glutPostRedisplay();
 }
 
 // Trackball
-
 int prevx = 0, prevy = 0;
-
-void mouseUpDown(int button, int state, int x, int y)
-{
-	if (state == GLUT_DOWN)
-	{
-		prevx = x;
-		prevy = y;
-	}
-}
-
-void mouseDragged(int x, int y)
-{
-	vec3 p;
-	mat4 m;
-
-	// This is a simple and IMHO really nice trackball system:
-
-	// Use the movement direction to create an orthogonal rotation axis
-
-	p.y = x - prevx;
-	p.x = -(prevy - y);
-	p.z = 0;
-
-	// Create a rotation around this axis and premultiply it on the model-to-world matrix
-	// Limited to fixed camera! Will be wrong if the camera is moved!
-
-	m = ArbRotate(p, sqrt(p.x*p.x + p.y*p.y) / 50.0); // Rotation in view coordinates
-	modelToWorldMatrix = Mult(m, modelToWorldMatrix);
-
-	prevx = x;
-	prevy = y;
-
-	glutPostRedisplay();
-}
 
 int main(int argc, char *argv[])
 {
@@ -369,8 +333,6 @@ int main(int argc, char *argv[])
   // display window and update every 20 ms
   glutDisplayFunc(display);
   glutReshapeFunc(reshape);
-  // glutMouseFunc(mouseUpDown);
-  // glutMotionFunc(mouseDragged);
   glutIdleFunc(idle);
   glutTimerFunc(20, &onTimer, 0);
 
