@@ -1,0 +1,16 @@
+vec3 worldPosFromDepth(float depth, vec2 depthTexCoord) {
+
+    // scale z [-1, 1]
+    float z = depth * 2.0 - 1.0;
+
+    // in orthogonal camera coordinates
+    vec4 clipSpacePosition = vec4(depthTexCoord * 2.0 - 1.0, z, 1.0);
+
+    // go from projection to view
+    vec4 viewSpacePosition = inverse(orthogonalProjectionMatrix) * clipSpacePosition;
+
+    // view to world
+    vec4 worldSpacePosition = inverse(worldToView) * viewSpacePosition;
+
+    return worldSpacePosition.xyz;
+}
