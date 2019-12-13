@@ -182,6 +182,7 @@ void runPosShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
   useFBO(out, in1, in2);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glUniform1i(glGetUniformLocation(shader, "texUnitPosition"), 0);
   glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
@@ -199,6 +200,7 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
   useFBO(out, in1, in2);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glUniform1i(glGetUniformLocation(shader, "texUnitPosition"), 0);
   glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
@@ -245,6 +247,7 @@ void display(void)
 
 		// Use position texture
 		useFBO(0L, positionTex2, 0L);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	else {
 		// --------- Run physics calculations ---------
@@ -253,6 +256,7 @@ void display(void)
 
 		// Use position texture
 		useFBO(0L, positionTex1, 0L);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	// Switch which position texture to render from
 	firstTexture = !firstTexture;
@@ -275,6 +279,7 @@ void display(void)
 
 	// Render plane
 	// useFBO(depthBuffer, 0L, 0L);
+	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(phongShader);
 	glEnable(GL_DEPTH_TEST);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrix.m);
@@ -284,6 +289,7 @@ void display(void)
 
 	// render depth image
 	// useFBO(0L, 0L, 0L);
+	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// glActiveTexture(GL_TEXTURE0);
 	// glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
 	//
