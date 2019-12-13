@@ -44,7 +44,7 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 100;
+int numParticles = 1000;
 float pixelSize;
 bool firstTexture = true;
 
@@ -52,13 +52,18 @@ bool firstTexture = true;
 FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2, *depthBuffer;
 GLuint minShader = 0,
        updatePosShader = 0,
-		   updateVelShader = 0,
-		   renderShader = 0,
-		   phongShader = 0,
-		   texShader = 0;
-vec3 forward = {0, 0, -1};
-vec3 cam = {0, 25, 75};
+	   updateVelShader = 0,
+	   renderShader = 0,
+	   phongShader = 0,
+	   texShader = 0,
+	   depthShader = 0;
+vec3 forwardDepth = {0, -1, 0};
+vec3 camDepth = {0, 30, 0};
 vec3 point = {0, 0, 0};
+vec3 upDepth = {0, 0, -1};
+
+vec3 forward= {0, 0, -1};
+vec3 cam= {0, 25, 75};
 vec3 up = {0, 1, 0};
 
 // texture
@@ -91,7 +96,7 @@ GLuint quadIndices[] = {	0,3,2, 0,2,1};
 Model *squareModel, *hailModel, *planeModel, *sphere;
 
 // matrices for rendering
-mat4 projectionMatrixPerspective, projectionMatrixOrthographic, viewMatrix, modelToWorldMatrix, worldToView, m, m_plane;
+mat4 projectionMatrixPerspective, projectionMatrixOrthographic, viewMatrix, modelToWorldMatrix, worldToView, worldToViewDepth, m, m_plane;
 
 // Time to integrate in shader
 GLfloat deltaT, currentTime;
@@ -123,6 +128,18 @@ void onTimer(int value)
     glutTimerFunc(20, &onTimer, value);
 }
 
+void renderDepth() {
+	// ---------------------- Render depth -------------------------------
+	useFBO(depthBuffer, 0L, 0L);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(phongShader);
+	glEnable(GL_DEPTH_TEST);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
+
+	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+}
+
 void init(void)
 {
 	dumpInfo();
@@ -144,6 +161,7 @@ void init(void)
 	renderShader = loadShaders("render.vert", "render.frag");
 	phongShader = loadShaders("phong.vert", "phong.frag");
 	texShader = loadShaders("textured.vert", "textured.frag");
+	depthShader = loadShaders("depth.vert", "depth.frag");
 	printError("init shader");
 
 	//textures
@@ -170,6 +188,27 @@ void init(void)
 	// initialize matrices
 	viewMatrix = lookAtv(cam, point, up);
 	modelToWorldMatrix = IdentityMatrix();
+
+	// Fix matrices
+	mat4 worldToViewDepth = lookAtv(camDepth, VectorAdd(camDepth, forwardDepth), upDepth);
+	m = Mult(worldToViewDepth, modelToWorldMatrix);
+	m = Mult(worldToViewDepth, Mult(T(-1, 0.5, 0), IdentityMatrix()));
+	m = T(m.m[3], m.m[7], m.m[11]);
+	m_plane = Mult(worldToViewDepth, S(10.0, 10.0, 10.0));
+
+	// Cameras
+	glViewport(0, 0, W, H);
+	GLfloat ratio = (GLfloat) W / (GLfloat) H;
+	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
+	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, 60.0);
+
+	renderDepth();
+
+	worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
+	m = Mult(worldToView, modelToWorldMatrix);
+	m = Mult(worldToView, Mult(T(-1, 0.5, 0), IdentityMatrix()));
+	m = T(m.m[3], m.m[7], m.m[11]);
+	m_plane = Mult(worldToView, S(10.0, 10.0, 10.0));
 
 	resetElapsedTime();
 }
@@ -200,12 +239,22 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
   useFBO(out, in1, in2);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  // positions and velocity update variables
   glUniform1i(glGetUniformLocation(shader, "texUnitPosition"), 0);
   glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
   glUniform1f(glGetUniformLocation(shader, "deltaTime"), deltaT);
   glUniform1f(glGetUniformLocation(shader, "pixelSize"), pixelSize);
+
+  // depth buffer variables
+  glUniform1i(glGetUniformLocation(shader, "texUnitDepth"), 2);
+  glUniformMatrix4fv(glGetUniformLocation(phongShader, "orthogonalProjectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
+  glUniformMatrix4fv(glGetUniformLocation(phongShader, "worldToView"), 1, GL_TRUE, worldToViewDepth.m);
+
 
   // particle defs for air resistance
   float radius = 0.005; // in meters
@@ -228,13 +277,6 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 
 void display(void)
 {
-  // Fix matrices
-	worldToView = lookAtv(cam, VectorAdd(cam, forward), up);
-	m = Mult(worldToView, modelToWorldMatrix);
-	m = Mult(worldToView, Mult(T(-1, 0.5, 0), IdentityMatrix()));
-	m = T(m.m[3], m.m[7], m.m[11]);
-	m_plane = Mult(worldToView, S(10.0, 10.0, 10.0));
-
 	// Update particles
 	if (firstTexture == 1) {
 		// --------- Run physics calculations ---------
@@ -280,25 +322,17 @@ void display(void)
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
-	// ---------------------- Render depth -------------------------------
-	// useFBO(depthBuffer, 0L, 0L);
-	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// glUseProgram(phongShader);
-	// glEnable(GL_DEPTH_TEST);
-	// glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
-	// glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
-	//
-	// DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
-	//
-	// // Draw the depth buffer to screen
+
+
+	// Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// glActiveTexture(GL_TEXTURE0);
 	// glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
 	//
-	// glUseProgram(minShader);
-	// glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
-	// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
+	// glUseProgram(depthShader);
+	// glUniform1i(glGetUniformLocation(depthShader, "texUnit"), 0);
+	// DrawModel(squareModel, depthShader, "in_Position", NULL, "in_TexCoord");
 
 	printError("display");
   glutSwapBuffers();
@@ -308,8 +342,8 @@ void reshape(GLsizei w, GLsizei h)
 {
 	glViewport(0, 0, w, h);
 	GLfloat ratio = (GLfloat) w / (GLfloat) h;
-	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000);
-	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1, 1000);
+	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
+	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, 60.0);
 }
 
 // Necessary
