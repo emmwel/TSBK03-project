@@ -461,7 +461,7 @@ FBOstruct *initPositionsFBO(int width, int height, int int_method)
 	// generate values
 	for (int i = 0; i < width*height*4; i += 4) {
 
-		numbers[i] = randomVal(-100.0, 100.0);
+		numbers[i] = randomVal(-99.0, 99.0);
 		numbers[i+1] = randomVal(90.0, 1000.0);
 		numbers[i+2] = randomVal(-50.0, 50.0);
 		numbers[i+3] = 1.0f;

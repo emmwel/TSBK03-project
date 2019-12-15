@@ -44,7 +44,7 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 1000;
+int numParticles = 10000;
 float pixelSize;
 bool firstTexture = true;
 
@@ -58,7 +58,7 @@ GLuint minShader = 0,
 	   texShader = 0,
 	   depthShader = 0;
 vec3 forwardDepth = {0, -1, 0};
-vec3 camDepth = {0, 30, 0};
+vec3 camDepth = {0, 50, 0};
 vec3 point = {0, 0, 0};
 vec3 upDepth = {0, 0, -1};
 
@@ -200,7 +200,7 @@ void init(void)
 	glViewport(0, 0, W, H);
 	GLfloat ratio = (GLfloat) W / (GLfloat) H;
 	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
-	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, 60.0);
+	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, 40.0);
 
 	renderDepth();
 
@@ -252,8 +252,8 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 
   // depth buffer variables
   glUniform1i(glGetUniformLocation(shader, "texUnitDepth"), 2);
-  glUniformMatrix4fv(glGetUniformLocation(phongShader, "orthogonalProjectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
-  glUniformMatrix4fv(glGetUniformLocation(phongShader, "worldToView"), 1, GL_TRUE, worldToViewDepth.m);
+  glUniformMatrix4fv(glGetUniformLocation(shader, "orthogonalProjectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
+  glUniformMatrix4fv(glGetUniformLocation(shader, "worldToView"), 1, GL_TRUE, worldToViewDepth.m);
 
 
   // particle defs for air resistance
@@ -343,7 +343,7 @@ void reshape(GLsizei w, GLsizei h)
 	glViewport(0, 0, w, h);
 	GLfloat ratio = (GLfloat) w / (GLfloat) h;
 	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
-	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, 60.0);
+	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, 40.0);
 }
 
 // Necessary
