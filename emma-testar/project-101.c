@@ -45,6 +45,7 @@ void onTimer(int value);
 
 // particle amounts, pixel size
 int numParticles = 10000;
+float maxLifetime = 60.0;
 float pixelSize;
 bool firstTexture = true;
 
@@ -125,6 +126,7 @@ void onTimer(int value)
 {
     glutPostRedisplay();
     deltaT = getElapsedTime() - currentTime;
+	//fprintf(stderr, "%f\n", deltaT);
     currentTime = getElapsedTime();
     glutTimerFunc(20, &onTimer, value);
 }
@@ -228,6 +230,7 @@ void runPosShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
   glUniform1f(glGetUniformLocation(shader, "deltaTime"), deltaT);
   glUniform1f(glGetUniformLocation(shader, "pixelSize"), pixelSize);
+  glUniform1f(glGetUniformLocation(shader, "maxLifetime"), maxLifetime);
 
   DrawModel(squareModel, shader, "in_Position", NULL, "in_TexCoord");
 }
@@ -289,6 +292,14 @@ void display(void)
 		// Use position texture
 		useFBO(0L, positionTex2, 0L);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// glUseProgram(minShader);
+		//
+	    // // Many of these things would be more efficiently done once and for all
+	    // glDisable(GL_CULL_FACE);
+	    // glDisable(GL_DEPTH_TEST);
+		// glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
+		// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
 	}
 	else {
 		// --------- Run physics calculations ---------
@@ -298,6 +309,14 @@ void display(void)
 		// Use position texture
 		useFBO(0L, positionTex1, 0L);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// glUseProgram(minShader);
+		//
+	    // // Many of these things would be more efficiently done once and for all
+	    // glDisable(GL_CULL_FACE);
+	    // glDisable(GL_DEPTH_TEST);
+		// glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
+		// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
 	}
 	// Switch which position texture to render from
 	firstTexture = !firstTexture;
@@ -326,7 +345,7 @@ void display(void)
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
 
-	// // Draw the depth buffer to screen
+	// Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// glActiveTexture(GL_TEXTURE0);
