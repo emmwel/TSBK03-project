@@ -5,6 +5,9 @@ uniform sampler2D texUnitPosition;
 uniform sampler2D texUnitVelocity;
 uniform float deltaTime;
 uniform float pixelSize;
+uniform float z_far;
+uniform float camHeight;
+float z_near = 1.0;
 
 // depth variables
 uniform sampler2D texUnitDepth;
@@ -21,21 +24,10 @@ out vec4 out_Color;
 
 float worldPosZFromDepth(float depth) {
 
-    // scale z [-1, 1]
-    float zndc = 2.0 * depth - 1.0;
+    // scale z between [0, clip-space-size]
+    float depth_flipped = (1-depth) * (z_far - z_near);
 
-    // values of orthogonal projection
-    float z_near = 1.0;
-    float z_far = 40.0;
-
-    // can do for only z when we have orthogonal projection
-    float z_view = z_near + zndc * (z_far - z_near);
-
-    // don't know why this works
-    vec4 onlyZ = vec4(0, 0, z_far-z_view, 1.0);
-    vec4 worldSpacePosition = inverse(worldToView) * onlyZ;
-
-    return worldSpacePosition.z;
+    return depth_flipped + (camHeight - z_far);
 }
 
 vec3 getSurfaceNormal(vec3 pos0, vec2 depthTexCoord0) {
@@ -82,22 +74,20 @@ void main(void)
   float depth_in = texture(texUnitDepth, depthTexCoord_in).x;
   float depth_z = worldPosZFromDepth(depth_in);
 
-  // TEMPORARY define surface position
-  // float plane_y = 0.0 + 0.5;
-
   // Separate velocity direction and magnitude
   float curVelNorm = length(curVel);
   vec3 curVelDirection = curVel / curVelNorm;
 
   // Calculate forces
-  vec3 gravityForce = mass * vec3(0, -50.0, 0);
-  // vec3 dragForce = -1/2 * airDragCoefficient * airDensity * splitArea * curVelNorm * curVelNorm * curVelDirection;
-  float dragConstants = 0.5;
-  vec3 dragForce = dragConstants * curVelNorm * curVelNorm * -curVelDirection;
+  vec3 gravityForce = mass * vec3(0, -9.82, 0);
+  vec3 dragForce = -1/2 * airDragCoefficient * airDensity * splitArea * curVelNorm * curVelNorm * curVelDirection;
+  //float dragConstants = 0.5; // Simplified drag constants
+  //vec3 dragForce = dragConstants * curVelNorm * curVelNorm * -curVelDirection;
 
   // Calculate acceleration from forces
   vec3 acceleration = (1/mass) * (gravityForce + dragForce);
 
+  // Calculate new velocity from acceleration
   vec3 newVel = curVel + deltaTime * acceleration;
 
   // Check for collision with plane
@@ -110,4 +100,5 @@ void main(void)
 
   // Output velocity
   out_Color = vec4(newVel, 1.0);
+
 }
