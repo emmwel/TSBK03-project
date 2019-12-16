@@ -277,62 +277,63 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 
 void display(void)
 {
-	// Update particles
-	if (firstTexture == 1) {
-		// --------- Run physics calculations ---------
-		runPosShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
-		runVelShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
-
-		// Use position texture
-		useFBO(0L, positionTex2, 0L);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
-	else {
-		// --------- Run physics calculations ---------
-		runPosShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
-		runVelShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
-
-		// Use position texture
-		useFBO(0L, positionTex1, 0L);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
-	// Switch which position texture to render from
-	firstTexture = !firstTexture;
-
-	// Bind hailstone appearance texture
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, hailtex);
-
-	// Activate shader
-	glUseProgram(texShader);
-	glEnable(GL_DEPTH_TEST);
-
-	// Upload variables to shader
-	glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
-	glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
-	glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
-	glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
-	glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
-	DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
-
-	// Render plane
-	glUseProgram(phongShader);
-	glEnable(GL_DEPTH_TEST);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
-	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
-
-
-
-	// // Draw the depth buffer to screen
-	// useFBO(0L, 0L, 0L);
-	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// glActiveTexture(GL_TEXTURE0);
-	// glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
+	// // Update particles
+	// if (firstTexture == 1) {
+	// 	// --------- Run physics calculations ---------
+	// 	runPosShader(updatePosShader, positionTex1, velocityTex1, positionTex2);
+	// 	runVelShader(updateVelShader, positionTex2, velocityTex1, velocityTex2);
 	//
-	// glUseProgram(depthShader);
-	// glUniform1i(glGetUniformLocation(depthShader, "texUnit"), 0);
-	// DrawModel(squareModel, depthShader, "in_Position", NULL, "in_TexCoord");
+	// 	// Use position texture
+	// 	useFBO(0L, positionTex2, 0L);
+	// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// }
+	// else {
+	// 	// --------- Run physics calculations ---------
+	// 	runPosShader(updatePosShader, positionTex2, velocityTex2, positionTex1);
+	// 	runVelShader(updateVelShader, positionTex1, velocityTex2, velocityTex1);
+	//
+	// 	// Use position texture
+	// 	useFBO(0L, positionTex1, 0L);
+	// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// }
+	// // Switch which position texture to render from
+	// firstTexture = !firstTexture;
+	//
+	// // Bind hailstone appearance texture
+	// glActiveTexture(GL_TEXTURE1);
+	// glBindTexture(GL_TEXTURE_2D, hailtex);
+	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//
+	// // Activate shader
+	// glUseProgram(texShader);
+	// glEnable(GL_DEPTH_TEST);
+	//
+	// // Upload variables to shader
+	// glUniformMatrix4fv(glGetUniformLocation(texShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
+	// glUniformMatrix4fv(glGetUniformLocation(texShader, "modelviewMatrix"), 1, GL_TRUE, m.m);
+	// glUniform1i(glGetUniformLocation(texShader, "texPositionsUnit"), 0);
+	// glUniform1i(glGetUniformLocation(texShader, "texLookUnit"), 1);
+	// glUniform1f(glGetUniformLocation(texShader, "pixelSize"), pixelSize);
+	// DrawModelInstanced(hailModel, texShader, "in_Position", NULL, "in_TexCoord", numParticles);
+	//
+	// // Render plane
+	// glUseProgram(phongShader);
+	// glEnable(GL_DEPTH_TEST);
+	// glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
+	// glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
+	// DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+
+
+
+	// Draw the depth buffer to screen
+	useFBO(0L, 0L, 0L);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
+
+	glUseProgram(depthShader);
+	glUniform1i(glGetUniformLocation(depthShader, "texUnit"), 0);
+	DrawModel(squareModel, depthShader, "in_Position", NULL, "in_TexCoord");
 
 	printError("display");
   glutSwapBuffers();
