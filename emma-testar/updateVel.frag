@@ -100,5 +100,4 @@ void main(void)
 
   // Output velocity
   out_Color = vec4(newVel, 1.0);
-
 }

@@ -35,8 +35,8 @@
 #include "LoadTGA.h"
 
 // initial width and heights
-#define W 800
-#define H 800
+#define W 1000
+#define H 1000
 
 // define PI for physics
 //#define M_PI 3.1415926535897932384626433832795
@@ -44,8 +44,8 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 10000;
-float maxLifetime = 60.0;
+int numParticles = 32768;
+float maxLifetime = 50.0;
 float pixelSize;
 bool firstTexture = true;
 
@@ -59,14 +59,20 @@ GLuint minShader = 0,
 	   texShader = 0,
 	   depthShader = 0;
 vec3 forwardDepth = {0, -1, 0};
-vec3 camDepth = {0, 50, 0};
-float camFarClip = 51;
+vec3 camDepth = {0, 60, 0};
+float camFarClip = 65;
 vec3 point = {0, 0, 0};
 vec3 upDepth = {0, 0, -1};
 
 vec3 forward= {0, 0, -1};
-vec3 cam= {0, 25, 75};
+vec3 cam= {0, 75, 200};
 vec3 up = {0, 1, 0};
+
+//colors
+vec4 black = {0.1, 0.1, 0.1, 1.0};
+vec4 gray = {0.9, 0.9, 0.9, 1.0};
+vec4 blue = {0.3, 0.5, 0.9, 1.0};
+vec4 green = {0.5, 0.8, 0.4, 1.0};
 
 // texture
 GLuint hailtex;
@@ -95,10 +101,10 @@ GLfloat quadTexcoords[] = {	0.0f, 1.0f,
 						0.0f, 0.0f};
 GLuint quadIndices[] = {	0,3,2, 0,2,1};
 
-Model *squareModel, *hailModel, *planeModel, *sphere;
+Model *squareModel, *hailModel, *planeModel, *sphere, *houseFoundation, *houseWindows, *houseMetal, *houseGround;
 
 // matrices for rendering
-mat4 projectionMatrixPerspective, projectionMatrixOrthographic, viewMatrix, modelToWorldMatrix, worldToView, worldToViewDepth, m, m_plane;
+mat4 projectionMatrixPerspective, projectionMatrixOrthographic, viewMatrix, modelToWorldMatrix, worldToView, worldToViewDepth, m, m_house;
 
 // Time to integrate in shader
 GLfloat deltaT, currentTime;
@@ -138,16 +144,19 @@ void renderDepth() {
 	glUseProgram(phongShader);
 	glEnable(GL_DEPTH_TEST);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
-
-	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_house.m);
+	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), gray.x, gray.y, gray.z, gray.w);
+	DrawModel(houseFoundation, phongShader, "in_Position", "in_Normal", NULL);
+	DrawModel(houseMetal, phongShader, "in_Position", "in_Normal", NULL);
+	DrawModel(houseWindows, phongShader, "in_Position", "in_Normal", NULL);
+	DrawModel(houseGround, phongShader, "in_Position", "in_Normal", NULL);
 }
 
 void init(void)
 {
 	dumpInfo();
 
-  	// GL inits
+	// GL inits
 	glClearColor(0.1, 0.1, 0.3, 0);
 	glClearDepth(1.0);
 	glEnable(GL_DEPTH_TEST);
@@ -168,7 +177,7 @@ void init(void)
 	printError("init shader");
 
 	//textures
-	LoadTGATextureSimple("hail-texture.tga", &hailtex);
+	LoadTGATextureSimple("hail.tga", &hailtex);
 
 	// Initialize texture FBOs for simulation
 	positionTex1 = initPositionsFBO(numParticles, 1, 0); // start positions
@@ -186,7 +195,11 @@ void init(void)
 	hailModel = LoadDataToModel(
 		quadVertices, NULL, quadTexcoords, NULL,
 		quadIndices, 4, 6);
-	planeModel = LoadModelPlus("plane-and-objects.obj");
+	// planeModel = LoadModelPlus("plane-and-objects.obj");
+	houseFoundation = LoadModelPlus("house_foundation2.obj");
+	houseMetal = LoadModelPlus("house_metal_pieces.obj");
+	houseWindows = LoadModelPlus("house_glass_pieces.obj");
+	houseGround = LoadModelPlus("house_ground.obj");
 
 	// initialize matrices
 	viewMatrix = lookAtv(cam, point, up);
@@ -197,7 +210,7 @@ void init(void)
 	m = Mult(worldToViewDepth, modelToWorldMatrix);
 	m = Mult(worldToViewDepth, Mult(T(-1, 0.5, 0), IdentityMatrix()));
 	m = T(m.m[3], m.m[7], m.m[11]);
-	m_plane = Mult(worldToViewDepth, S(10.0, 10.0, 10.0));
+	m_house = Mult(worldToViewDepth, S(10.0, 10.0, 10.0));
 
 	// Cameras
 	glViewport(0, 0, W, H);
@@ -211,7 +224,7 @@ void init(void)
 	m = Mult(worldToView, modelToWorldMatrix);
 	m = Mult(worldToView, Mult(T(-1, 0.5, 0), IdentityMatrix()));
 	m = T(m.m[3], m.m[7], m.m[11]);
-	m_plane = Mult(worldToView, S(10.0, 10.0, 10.0));
+	m_house = Mult(worldToView, S(10.0, 10.0, 10.0));
 
 	resetElapsedTime();
 }
@@ -292,14 +305,6 @@ void display(void)
 		// Use position texture
 		useFBO(0L, positionTex2, 0L);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// glUseProgram(minShader);
-		//
-	    // // Many of these things would be more efficiently done once and for all
-	    // glDisable(GL_CULL_FACE);
-	    // glDisable(GL_DEPTH_TEST);
-		// glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
-		// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
 	}
 	else {
 		// --------- Run physics calculations ---------
@@ -309,14 +314,6 @@ void display(void)
 		// Use position texture
 		useFBO(0L, positionTex1, 0L);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// glUseProgram(minShader);
-		//
-	    // // Many of these things would be more efficiently done once and for all
-	    // glDisable(GL_CULL_FACE);
-	    // glDisable(GL_DEPTH_TEST);
-		// glUniform1i(glGetUniformLocation(minShader, "texUnit"), 0);
-		// DrawModel(squareModel, minShader, "in_Position", NULL, "in_TexCoord");
 	}
 	// Switch which position texture to render from
 	firstTexture = !firstTexture;
@@ -342,8 +339,15 @@ void display(void)
 	glUseProgram(phongShader);
 	glEnable(GL_DEPTH_TEST);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
-	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
+	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_house.m);
+	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), gray.x, gray.y, gray.z, gray.w);
+	DrawModel(houseFoundation, phongShader, "in_Position", "in_Normal", NULL);
+	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), black.x, black.y, black.z, black.w);
+	DrawModel(houseMetal, phongShader, "in_Position", "in_Normal", NULL);
+	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), blue.x, blue.y, blue.z, blue.w);
+	DrawModel(houseWindows, phongShader, "in_Position", "in_Normal", NULL);
+	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), green.x, green.y, green.z, green.w);
+	DrawModel(houseGround, phongShader, "in_Position", "in_Normal", NULL);
 
 	// Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
