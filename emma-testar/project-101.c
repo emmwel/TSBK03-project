@@ -305,6 +305,7 @@ void display(void)
 	// Bind hailstone appearance texture
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, hailtex);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Activate shader
 	glUseProgram(texShader);
@@ -324,8 +325,6 @@ void display(void)
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixPerspective.m);
 	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_plane.m);
 	DrawModel(planeModel, phongShader, "in_Position", "in_Normal", NULL);
-
-
 
 	// // Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
