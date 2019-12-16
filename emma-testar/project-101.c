@@ -44,7 +44,7 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 10000;
+int numParticles = 1000;
 float pixelSize;
 bool firstTexture = true;
 
@@ -324,7 +324,7 @@ void display(void)
 
 
 
-	// Draw the depth buffer to screen
+	// // Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// glActiveTexture(GL_TEXTURE0);
