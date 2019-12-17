@@ -44,7 +44,7 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 16000;
+int numParticles = 16384;
 float maxLifetime = 50.0;
 float pixelSize;
 bool firstTexture = true;
@@ -56,11 +56,11 @@ float planeWidth = 580;
 FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2, *depthBuffer;
 GLuint minShader = 0,
        updatePosShader = 0,
-	   updateVelShader = 0,
-	   renderShader = 0,
-	   phongShader = 0,
-	   texShader = 0,
-	   depthShader = 0;
+		   updateVelShader = 0,
+		   renderShader = 0,
+		   phongShader = 0,
+		   texShader = 0,
+		   depthShader = 0;
 vec3 forwardDepth = {0, -1, 0};
 vec3 camDepth = {0, 100, 0};
 float camFarClip = 105;
@@ -161,7 +161,7 @@ void init(void)
 	dumpInfo();
 
 	// GL inits
-	glClearColor(0.1, 0.1, 0.3, 0);
+	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.0);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -181,7 +181,7 @@ void init(void)
 	printError("init shader");
 
 	//textures
-	LoadTGATextureSimple("hail.tga", &hailtex);
+	LoadTGATextureSimple("hail-small.tga", &hailtex);
 
 	// Initialize texture FBOs for simulation
 	positionTex1 = initPositionsFBO(numParticles, 1, 0, planeWidth); // start positions

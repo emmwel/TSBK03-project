@@ -9,6 +9,8 @@ uniform mat4 projectionMatrix;
 uniform sampler2D texPositionsUnit;
 uniform float pixelSize;
 
+out float z_dist;
+
 void main(void)
 {
 	texCoord = in_TexCoord;
@@ -20,6 +22,9 @@ void main(void)
 	vec3 tex_pos3D = vec3(tex_position);
 	vec3 newpos = in_Position + tex_pos3D;
 	//vec3 newpos = in_Position;
+
+	// Set z_dist to calculate fog
+	z_dist = newpos.z;
 
 	// This should include projection
 	gl_Position = projectionMatrix * modelviewMatrix * vec4(newpos, 1.0);

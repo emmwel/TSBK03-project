@@ -17,6 +17,13 @@ void main(void)
 	const vec3 light = normalize(vec3(1,2,1)); // Given in VIEW coordinates! You usually specify light sources in world coordinates.
 	float diffuse, specular, shade;
 
+	// Fog
+	float fogStart = 10.0; // Distance fog starts at
+	float fogEnd = 400;	//Distance fog ends at
+	float pointDistance = gl_FragCoord.z / gl_FragCoord.w;
+	float fogFactor = (fogEnd - pointDistance)/(fogEnd - fogStart);
+	fogFactor = clamp(fogFactor, 0, 1);
+
 	// Diffuse
 	diffuse = dot(normalize(exNormal), light);
 	diffuse = max(0.0, diffuse); // No negative light
@@ -30,4 +37,8 @@ void main(void)
 	specular = max(specular, 0.0);
 	shade = 0.7*diffuse + 1.0*specular;
 	outColor = surface_color * vec4(shade, shade, shade, 1.0);
+	// outColor = surface_color * vec4(shade, shade, shade, 1.0);
+	// outColor = vec4(fogFactor, fogFactor, fogFactor, 1.0);
+	outColor = mix(vec4(0.5, 0.5, 0.5, 1.0), outColor, fogFactor);
+
 }
