@@ -44,10 +44,13 @@
 void onTimer(int value);
 
 // particle amounts, pixel size
-int numParticles = 32768;
+int numParticles = 16000;
 float maxLifetime = 50.0;
 float pixelSize;
 bool firstTexture = true;
+
+// model
+float planeWidth = 580;
 
 // Globals
 FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2, *depthBuffer;
@@ -59,8 +62,9 @@ GLuint minShader = 0,
 	   texShader = 0,
 	   depthShader = 0;
 vec3 forwardDepth = {0, -1, 0};
-vec3 camDepth = {0, 60, 0};
-float camFarClip = 65;
+vec3 camDepth = {0, 100, 0};
+float camFarClip = 105;
+float camNearClip = 1.0;
 vec3 point = {0, 0, 0};
 vec3 upDepth = {0, 0, -1};
 
@@ -180,7 +184,7 @@ void init(void)
 	LoadTGATextureSimple("hail.tga", &hailtex);
 
 	// Initialize texture FBOs for simulation
-	positionTex1 = initPositionsFBO(numParticles, 1, 0); // start positions
+	positionTex1 = initPositionsFBO(numParticles, 1, 0, planeWidth); // start positions
 	positionTex2 = initZeroFBO(numParticles, 1, 0);
 	velocityTex1 = initVelocityFBO(numParticles, 1, 0);
 	velocityTex2 = initZeroFBO(numParticles, 1, 0);
@@ -216,7 +220,7 @@ void init(void)
 	glViewport(0, 0, W, H);
 	GLfloat ratio = (GLfloat) W / (GLfloat) H;
 	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
-	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, camFarClip);
+	projectionMatrixOrthographic = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camNearClip, camFarClip);
 
 	renderDepth();
 
@@ -266,13 +270,15 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   glUniform1i(glGetUniformLocation(shader, "texUnitVelocity"), 1);
   glUniform1f(glGetUniformLocation(shader, "deltaTime"), deltaT);
   glUniform1f(glGetUniformLocation(shader, "pixelSize"), pixelSize);
-	glUniform1f(glGetUniformLocation(shader, "z_far"), camFarClip);
-	glUniform1f(glGetUniformLocation(shader, "camHeight"), camDepth.y);
 
   // depth buffer variables
   glUniform1i(glGetUniformLocation(shader, "texUnitDepth"), 2);
   glUniformMatrix4fv(glGetUniformLocation(shader, "orthogonalProjectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
   glUniformMatrix4fv(glGetUniformLocation(shader, "worldToView"), 1, GL_TRUE, worldToViewDepth.m);
+  glUniform1f(glGetUniformLocation(shader, "zFar"), camFarClip);
+  glUniform1f(glGetUniformLocation(shader, "zNear"), camNearClip);
+  glUniform1f(glGetUniformLocation(shader, "camHeight"), camDepth.y);
+  glUniform1f(glGetUniformLocation(shader, "planeWidth"), planeWidth);
 
 
   // particle defs for air resistance
@@ -285,10 +291,15 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 
   // mass in kg
   float mass = 200;
+
+  // forces variables
   glUniform1f(glGetUniformLocation(shader, "splitArea"), splitArea);
   glUniform1f(glGetUniformLocation(shader, "airDragCoefficient"), airDragCoefficient);
   glUniform1f(glGetUniformLocation(shader, "airDensity"), airDensity);
   glUniform1f(glGetUniformLocation(shader, "mass"), mass);
+
+  // lifetime
+  glUniform1f(glGetUniformLocation(shader, "maxLifetime"), maxLifetime);
 
 
   DrawModel(squareModel, shader, "in_Position", NULL, "in_TexCoord");
@@ -349,7 +360,7 @@ void display(void)
 	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), green.x, green.y, green.z, green.w);
 	DrawModel(houseGround, phongShader, "in_Position", "in_Normal", NULL);
 
-	// Draw the depth buffer to screen
+	// // Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// glActiveTexture(GL_TEXTURE0);
@@ -368,7 +379,7 @@ void reshape(GLsizei w, GLsizei h)
 	glViewport(0, 0, w, h);
 	GLfloat ratio = (GLfloat) w / (GLfloat) h;
 	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
-	projectionMatrixOrthographic = ortho(-100, 100, -100, 100, 1.0, camFarClip);
+	projectionMatrixOrthographic = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camNearClip, camFarClip);
 }
 
 // Necessary

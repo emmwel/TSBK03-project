@@ -430,7 +430,7 @@ FBOstruct *initZeroFBO(int width, int height, int int_method)
 }
 
 
-FBOstruct *initPositionsFBO(int width, int height, int int_method)
+FBOstruct *initPositionsFBO(int width, int height, int int_method, float plane_width)
 {
 	FBOstruct *fbo = malloc(sizeof(FBOstruct));
 
@@ -461,10 +461,10 @@ FBOstruct *initPositionsFBO(int width, int height, int int_method)
 	// generate values
 	for (int i = 0; i < width*height*4; i += 4) {
 
-		numbers[i] = randomVal(-290.0, 290.0);
-		numbers[i+1] = randomVal(90.0, 1000.0);
-		numbers[i+2] = randomVal(-290.0, 290.0);
-		numbers[i+3] = randomVal(45.0, 50.0);
+		numbers[i] = randomVal(-plane_width/2, plane_width/2);
+		numbers[i+1] = randomVal(500.0, 1500.0);
+		numbers[i+2] = randomVal(-plane_width/2, plane_width/2);
+		numbers[i+3] = randomVal(10.0, 45.0);
 	}
 
 	// GL_FLOAT is important to be able to load the float data correctly
