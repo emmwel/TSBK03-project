@@ -69,8 +69,10 @@ vec3 point = {0, 0, 0};
 vec3 upDepth = {0, 0, -1};
 
 vec3 forward= {0, 0, -1};
-vec3 cam= {0, 75, 200};
+vec3 cam = {0, 75, 200};
 vec3 up = {0, 1, 0};
+
+vec3 windDirection = {1.0, 0.0, 0.0};
 
 //colors
 vec4 black = {0.1, 0.1, 0.1, 1.0};
@@ -280,6 +282,8 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   glUniform1f(glGetUniformLocation(shader, "camHeight"), camDepth.y);
   glUniform1f(glGetUniformLocation(shader, "planeWidth"), planeWidth);
 
+	// windDirection
+	glUniform3f(glGetUniformLocation(phongShader, "windDirection"), windDirection.x, windDirection.y, windDirection.z);
 
   // particle defs for air resistance
   float radius = 0.005; // in meters
@@ -290,7 +294,7 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   float airDensity = 1.2;
 
   // mass in kg
-  float mass = 200;
+  float mass = 0.005;
 
   // forces variables
   glUniform1f(glGetUniformLocation(shader, "splitArea"), splitArea);
@@ -300,7 +304,6 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 
   // lifetime
   glUniform1f(glGetUniformLocation(shader, "maxLifetime"), maxLifetime);
-
 
   DrawModel(squareModel, shader, "in_Position", NULL, "in_TexCoord");
 }
@@ -359,6 +362,9 @@ void display(void)
 	DrawModel(houseWindows, phongShader, "in_Position", "in_Normal", NULL);
 	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), green.x, green.y, green.z, green.w);
 	DrawModel(houseGround, phongShader, "in_Position", "in_Normal", NULL);
+
+	// Rotate wind direction around y axis
+	// windDirection = MultVec3(Ry(0.01 * deltaT), windDirection);
 
 	// // Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
