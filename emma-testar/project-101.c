@@ -60,7 +60,10 @@ GLuint minShader = 0,
 		   renderShader = 0,
 		   phongShader = 0,
 		   texShader = 0,
-		   depthShader = 0;
+		   depthShader = 0,
+			 emptyShader = 0;
+
+// Depth camera
 vec3 forwardDepth = {0, -1, 0};
 vec3 camDepth = {0, 100, 0};
 float camFarClip = 105;
@@ -68,11 +71,15 @@ float camNearClip = 1.0;
 vec3 point = {0, 0, 0};
 vec3 upDepth = {0, 0, -1};
 
+// Scene camera
 vec3 forward= {0, 0, -1};
 vec3 cam = {0, 75, 200};
 vec3 up = {0, 1, 0};
 
-vec3 windDirection = {1.0, 0.0, 0.0};
+// Shadow map camera (ligt source)
+// vec3 camShadow = {100.0, 100.0, 100.0};
+// float camShadowNearClip = 1.0;
+// float camShadowFarClip = 1000.0;
 
 //colors
 vec4 black = {0.1, 0.1, 0.1, 1.0};
@@ -109,8 +116,16 @@ GLuint quadIndices[] = {	0,3,2, 0,2,1};
 
 Model *squareModel, *hailModel, *planeModel, *sphere, *houseFoundation, *houseWindows, *houseMetal, *houseGround;
 
-// matrices for rendering
-mat4 projectionMatrixPerspective, projectionMatrixOrthographic, viewMatrix, modelToWorldMatrix, worldToView, worldToViewDepth, m, m_house;
+// Matrices for rendering
+// mat4 projectionMatrixOrthoShadow;
+mat4 projectionMatrixPerspective;
+mat4 projectionMatrixOrthographic;
+mat4 viewMatrix;
+mat4 modelToWorldMatrix;
+mat4 worldToView;
+mat4 worldToViewDepth;
+mat4 m;
+mat4 m_house;
 
 // Time to integrate in shader
 GLfloat deltaT, currentTime;
@@ -147,15 +162,14 @@ void renderDepth() {
 	// ---------------------- Render depth -------------------------------
 	useFBO(depthBuffer, 0L, 0L);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(phongShader);
+	glUseProgram(emptyShader);
 	glEnable(GL_DEPTH_TEST);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
-	glUniformMatrix4fv(glGetUniformLocation(phongShader, "modelviewMatrix"), 1, GL_TRUE, m_house.m);
-	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), gray.x, gray.y, gray.z, gray.w);
-	DrawModel(houseFoundation, phongShader, "in_Position", "in_Normal", NULL);
-	DrawModel(houseMetal, phongShader, "in_Position", "in_Normal", NULL);
-	DrawModel(houseWindows, phongShader, "in_Position", "in_Normal", NULL);
-	DrawModel(houseGround, phongShader, "in_Position", "in_Normal", NULL);
+	glUniformMatrix4fv(glGetUniformLocation(emptyShader, "projectionMatrix"), 1, GL_TRUE, projectionMatrixOrthographic.m);
+	glUniformMatrix4fv(glGetUniformLocation(emptyShader, "modelviewMatrix"), 1, GL_TRUE, m_house.m);
+	DrawModel(houseFoundation, emptyShader, "in_Position", NULL, NULL);
+	DrawModel(houseMetal, emptyShader, "in_Position", NULL, NULL);
+	DrawModel(houseWindows, emptyShader, "in_Position", NULL, NULL);
+	DrawModel(houseGround, emptyShader, "in_Position", NULL, NULL);
 }
 
 void init(void)
@@ -180,6 +194,7 @@ void init(void)
 	phongShader = loadShaders("phong.vert", "phong.frag");
 	texShader = loadShaders("textured.vert", "textured.frag");
 	depthShader = loadShaders("depth.vert", "depth.frag");
+	emptyShader = loadShaders("empty.vert", "empty.frag");
 	printError("init shader");
 
 	//textures
@@ -282,9 +297,6 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
   glUniform1f(glGetUniformLocation(shader, "camHeight"), camDepth.y);
   glUniform1f(glGetUniformLocation(shader, "planeWidth"), planeWidth);
 
-	// windDirection
-	glUniform3f(glGetUniformLocation(phongShader, "windDirection"), windDirection.x, windDirection.y, windDirection.z);
-
   // particle defs for air resistance
   float radius = 0.005; // in meters
   float splitArea =  radius * radius * M_PI;
@@ -363,9 +375,6 @@ void display(void)
 	glUniform4f(glGetUniformLocation(phongShader, "surface_color"), green.x, green.y, green.z, green.w);
 	DrawModel(houseGround, phongShader, "in_Position", "in_Normal", NULL);
 
-	// Rotate wind direction around y axis
-	// windDirection = MultVec3(Ry(0.01 * deltaT), windDirection);
-
 	// // Draw the depth buffer to screen
 	// useFBO(0L, 0L, 0L);
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -386,6 +395,7 @@ void reshape(GLsizei w, GLsizei h)
 	GLfloat ratio = (GLfloat) w / (GLfloat) h;
 	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
 	projectionMatrixOrthographic = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camNearClip, camFarClip);
+	// projectionMatrixOrthoShadow = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camShadowNearClip, camShadowFarClip);
 }
 
 // Necessary
