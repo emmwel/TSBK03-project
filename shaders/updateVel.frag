@@ -20,6 +20,9 @@ uniform float airDensity;
 uniform float mass;
 uniform vec3 windDirection;
 
+// Normals
+uniform sampler2D texUnitNormals;
+
 // Lifetime
 uniform float maxLifetime;
 
@@ -33,36 +36,6 @@ float worldPosZFromDepth(float depth) {
 
     return depth_flipped + (camHeight - zFar);
 }
-
-vec3 getSurfaceNormal(vec3 pos0, vec2 depthTexCoord0) {
-
-    // Get texture coordinates for 2 nearby points
-    vec2 offset = vec2(1.0) / textureSize(texUnitDepth, 0).xy;
-    vec2 depthTexCoord1 = depthTexCoord0 + vec2(offset.x, 0.0);
-    vec2 depthTexCoord2 = depthTexCoord0 + vec2(0.0, offset.y);
-
-    // sample depth for nearby points
-    float depth_1 = texture(texUnitDepth, depthTexCoord1).x;
-    float depth_2 = texture(texUnitDepth, depthTexCoord2).x;
-
-    // Transform to world coordinates, note that the depth image was taken from above, so the given coordinates are on the y-axis
-    float y_1 = worldPosZFromDepth(depth_1);
-    float y_2 = worldPosZFromDepth(depth_2);
-
-    // Transform texture coordinates into world coordinates
-    float x_1 = (depthTexCoord1.x * planeWidth) - planeWidth/2;
-    float x_2 = (depthTexCoord2.x * planeWidth) - planeWidth/2;
-    float z_1 = (-1 * depthTexCoord1.y * planeWidth) + planeWidth/2;
-    float z_2 = (-1 * depthTexCoord2.y * planeWidth) + planeWidth/2;
-
-    // Create normal
-    vec3 pos1 = vec3(x_1, y_1, z_1);
-    vec3 pos2 = vec3(x_2, y_2, z_2);
-    vec3 normal_out = normalize(cross(pos1.xyz - pos0.xyz, pos2.xyz - pos0.xyz));
-
-    return normal_out;
-}
-
 
 void main(void)
 {
@@ -117,7 +90,7 @@ void main(void)
   // Check for collision with plane
   vec3 newPos = curPos + deltaTime * newVel;
   if (newPos.y < depth_world) {
-    vec3 normal = getSurfaceNormal(vec3(curPos.x, depth_world, curPos.y), depthTexCoord_in);
+    vec3 normal = texture(texUnitNormals, vec2(u, v)).xyz;
     vec3 impulse = 1.15 * normal * dot(normal, newVel);
     newVel -= impulse;
   }
