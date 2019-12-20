@@ -8,6 +8,7 @@ uniform mat4 modelviewMatrix;
 uniform mat4 projectionMatrix;
 uniform sampler2D texPositionsUnit;
 uniform float pixelSize;
+uniform int textureWidthHeight;
 
 out float z_dist;
 
@@ -16,7 +17,13 @@ void main(void)
 	texCoord = in_TexCoord;
 
 	// Get position from texture
-	vec4 tex_position = texture(texPositionsUnit, vec2(gl_InstanceID * pixelSize, 0.0));
+	vec4 tex_position = texture(
+		texPositionsUnit,
+		vec2(
+			mod(gl_InstanceID * pixelSize, textureWidthHeight),
+			gl_InstanceID * pixelSize / textureWidthHeight
+		)
+	);
 
 	// Add texture position to current position
 	vec3 tex_pos3D = vec3(tex_position);

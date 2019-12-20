@@ -41,11 +41,17 @@ typedef struct
 	int width, height;
 } FBOstruct;
 
+// Generates random values within range [min, max]
 float randomVal(float min, float max) ;
 
+// Initializes FBOs
 FBOstruct *initFBO(int width, int height, int int_method);
 FBOstruct *initFBO2(int width, int height, int int_method, int create_depthimage);
+
+// Initializes FBO with zeros in the texture
 FBOstruct *initZeroFBO(int width, int height, int int_method);
+
+// Initializes FBO texture with random values in the RGBA channels.
 FBOstruct *initPositionsFBO(int width, int height, int int_method, float plane_width);
 FBOstruct *initVelocityFBO(int width, int height, int int_method);
 void useFBO(FBOstruct *out, FBOstruct *in1, FBOstruct *in2);

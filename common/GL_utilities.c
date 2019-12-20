@@ -270,7 +270,7 @@ void CHECK_FRAMEBUFFER_STATUS()
 		fprintf(stderr, "Framebuffer not complete\n");
 }
 
-// generate random floats
+// Generate random floats
 float randomVal(float min, float max) {
 	float random = (float)rand()/(float)(RAND_MAX);
 	float range = max - min;
@@ -375,6 +375,7 @@ FBOstruct *initFBO2(int width, int height, int int_method, int create_depthimage
     return fbo;
 }
 
+// Initialize an FBO with only zeros in the texture
 FBOstruct *initZeroFBO(int width, int height, int int_method)
 {
 	FBOstruct *fbo = malloc(sizeof(FBOstruct));
@@ -401,9 +402,10 @@ FBOstruct *initZeroFBO(int width, int height, int int_method)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	}
 
-	float *numbers = malloc(width*height*4*sizeof(float)); // create RGBA values
+	// Initialize an array of the texture size and the RGBA channels
+	float *numbers = malloc(width*height*4*sizeof(float));
 
-	// generate values
+	// Generate values and place them in each channel
 	for (int i = 0; i < width*height*4; i += 4) {
 		numbers[i] = 0.0f;
 		numbers[i+1] = 0.0f;
@@ -429,7 +431,7 @@ FBOstruct *initZeroFBO(int width, int height, int int_method)
 	return fbo;
 }
 
-
+// Initialize FBO to be used for updating positions in shader
 FBOstruct *initPositionsFBO(int width, int height, int int_method, float plane_width)
 {
 	FBOstruct *fbo = malloc(sizeof(FBOstruct));
@@ -456,14 +458,17 @@ FBOstruct *initPositionsFBO(int width, int height, int int_method, float plane_w
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	}
 
-	float *numbers = malloc(width*height*4*sizeof(float)); // create RGBA values
+	// Initialize an array of the texture size and the RGBA channels
+	float *numbers = malloc(width*height*4*sizeof(float));
 
-	// generate values
+	// Generate values for positions and lifetime
 	for (int i = 0; i < width*height*4; i += 4) {
-
+		// Position
 		numbers[i] = randomVal(-plane_width/2, plane_width/2);
 		numbers[i+1] = randomVal(300.0, 600.0);
 		numbers[i+2] = randomVal(-plane_width/2, plane_width/2);
+
+		// Lifetime of particle
 		numbers[i+3] = randomVal(30.0, 50.0);
 	}
 
@@ -485,6 +490,7 @@ FBOstruct *initPositionsFBO(int width, int height, int int_method, float plane_w
 	return fbo;
 }
 
+// Initialize FBO to be used for updating velocities in shader
 FBOstruct *initVelocityFBO(int width, int height, int int_method)
 {
 	FBOstruct *fbo = malloc(sizeof(FBOstruct));
@@ -511,14 +517,17 @@ FBOstruct *initVelocityFBO(int width, int height, int int_method)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	}
 
-	float *numbers = malloc(width*height*4*sizeof(float)); // create RGBA values
+	// Initialize an array of the texture size and the RGBA channels
+	float *numbers = malloc(width*height*4*sizeof(float));
 
-	// generate values
+	// Generate inital velocities and set them in the RGB channel
 	for (int i = 0; i < width*height*4; i += 4) {
-
+		// Velocity
 		numbers[i] = 0.0f;
 		numbers[i+1] = randomVal(-5.0, -0.1);
 		numbers[i+2] = 0.0f;
+
+		// Alpha channel not used for anything specific so set to 1
 		numbers[i+3] = 1.0f;
 	}
 
