@@ -24,10 +24,10 @@ void main(void)
     float age = curPos[3] + deltaTime;
 
     if (age > maxLifetime) {
-        float newX = rand(curPos.xyz, vec3(17.975, 88.156, 25.428), -350.0, 230.0);
-        float newY = rand(curPos.xyz, vec3(12.989, 78.233, 37.719), 400.0, 700.0);
-        float newZ = rand(curPos.xyz, vec3(39.346, 11.135, 83.155), -350.0, 230.0);
-        float newAge = rand(curPos.xyz, vec3(73.156, 52.235, 09.151), 10.0, 50.0);
+        float newX = rand(curPos.xyz, vec3(17.975, 88.156, 25.428), -300.0, 150.0);
+        float newY = rand(curPos.xyz, vec3(12.989, 78.233, 37.719), 300.0, 700.0);
+        float newZ = rand(curPos.xyz, vec3(39.346, 11.135, 83.155), -150.0, 100.0);
+        float newAge = rand(curPos.xyz, vec3(73.156, 52.235, 09.151), 0.0, 10.0);
         out_Color = vec4(newX, newY, newZ, newAge);
         //out_Color = vec4(1.0, 0.0, 0.0, 1.0);
     }

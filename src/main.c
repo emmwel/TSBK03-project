@@ -44,8 +44,8 @@
 void onTimer(int value);
 
 // Particle variables
-int numParticles_WH = 1024; // particle texture width = height
-float maxLifetime = 50.0;
+int numParticles_WH = 2048; // particle texture width = height
+float maxLifetime = 20.0;
 
 // Variables for reading the FBOs
 float pixelSize;
@@ -242,7 +242,7 @@ void init(void) {
 	// Cameras
 	glViewport(0, 0, W, H);
 	GLfloat ratio = (GLfloat) W / (GLfloat) H;
-	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
+	projectionMatrixPerspective = perspective(90, ratio, 15.0, 1000.0);
 	projectionMatrixOrthographic = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camNearClip, camFarClip);
 
 	// Call function to render scene depth
@@ -398,7 +398,7 @@ void display(void) {
 void reshape(GLsizei w, GLsizei h) {
 	glViewport(0, 0, w, h);
 	GLfloat ratio = (GLfloat) w / (GLfloat) h;
-	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
+	projectionMatrixPerspective = perspective(90, ratio, 15.0, 1000.0);
 	projectionMatrixOrthographic = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camNearClip, camFarClip);
 }
 
