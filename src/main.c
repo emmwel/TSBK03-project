@@ -2,7 +2,7 @@
 // Line to compile on mac
 // gcc main.c ../common/*.c ../common/Mac/MicroGlut.m -o main -framework OpenGL -framework Cocoa -I../common/Mac -I../common -Wno-deprecated-declarations
 
-// Compile on linux: make && ./project-101
+// Compile on linux: make && ./main
 
 #include <stdio.h>
 #include <math.h>
@@ -44,22 +44,29 @@
 void onTimer(int value);
 
 // Particle variables
+<<<<<<< HEAD
 int numParticles_WH = 1024; // particle texture width = height
 float maxLifetime = 50.0;
+=======
+int numParticles_WH = 2048; // particle texture width = height
+float maxLifetime = 20.0;
+>>>>>>> e284f83997e28a769ec2c28d88063f18b8ddb2b1
 
 // Variables for reading the FBOs
 float pixelSize;
 bool firstTexture = true;
 
 // FBOs
-FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2, *depthBuffer;
+FBOstruct *positionTex1, *positionTex2, *velocityTex1, *velocityTex2, *depthBuffer, *normalTex;
 
 // Shaders
 GLuint updatePosShader = 0,
 	   updateVelShader = 0,
 	   phongShader = 0,
 	   texShader = 0,
-	   emptyShader = 0;
+	   emptyShader = 0,
+		 normalShader = 0,
+		 minShader = 0;
 
 // Depth camera
 vec3 forwardDepth = {0, -1, 0};
@@ -99,10 +106,10 @@ GLfloat squareTexCoord[] = {
 GLuint squareIndices[] = {0, 1, 2, 0, 2, 3};
 
 // Quad to render as billboard for hailstones
-GLfloat quadVertices[] = {	-0.5,-0.5,0.0,
-							0.5,-0.5,0.0,
-							0.5,0.5,0.0,
-							-0.5,0.5,0.0};
+GLfloat quadVertices[] = {	-0.1,-0.1,0.0,
+							0.1,-0.1,0.0,
+							0.1,0.1,0.0,
+							-0.1,0.1,0.0};
 GLfloat quadTexcoords[] = {	0.0f, 1.0f,
 							1.0f, 1.0f,
 							1.0f, 0.0f,
@@ -161,6 +168,18 @@ void renderDepth() {
 	DrawModel(houseMetal, emptyShader, "in_Position", NULL, NULL);
 	DrawModel(houseWindows, emptyShader, "in_Position", NULL, NULL);
 	DrawModel(houseGround, emptyShader, "in_Position", NULL, NULL);
+	// ---------------------- Render normals ----------------------------
+	useFBO(normalTex, 0L, 0L);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(normalShader);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
+	glUniform1f(glGetUniformLocation(normalShader, "zFar"), camFarClip);
+	glUniform1f(glGetUniformLocation(normalShader, "zNear"), camNearClip);
+	glUniform1f(glGetUniformLocation(normalShader, "camHeight"), camDepth.y);
+	glUniform1f(glGetUniformLocation(normalShader, "planeWidth"), planeWidth);
+	glUniform1i(glGetUniformLocation(normalShader, "texUnitDepth"), 0);
+	DrawModel(squareModel, normalShader, "in_Position", NULL, "in_TexCoord");
 }
 
 void init(void) {
@@ -182,6 +201,8 @@ void init(void) {
 	phongShader = loadShaders("../shaders/phong.vert", "../shaders/phong.frag");
 	texShader = loadShaders("../shaders/textured.vert", "../shaders/textured.frag");
 	emptyShader = loadShaders("../shaders/empty.vert", "../shaders/empty.frag");
+	normalShader = loadShaders("../shaders/normals.vert", "../shaders/normals.frag");
+	minShader = loadShaders("../shaders/minimal.vert", "../shaders/minimal.frag");
 	printError("init shader");
 
 	//textures
@@ -192,6 +213,7 @@ void init(void) {
 	positionTex2 = initZeroFBO(numParticles_WH, numParticles_WH, 0);
 	velocityTex1 = initVelocityFBO(numParticles_WH, numParticles_WH, 0);
 	velocityTex2 = initZeroFBO(numParticles_WH, numParticles_WH, 0);
+	normalTex = initFBO(W, H, 1);
 
 	// create FBO which saves depth
 	depthBuffer = initFBO2(W, H, 0, 2);
@@ -225,7 +247,7 @@ void init(void) {
 	// Cameras
 	glViewport(0, 0, W, H);
 	GLfloat ratio = (GLfloat) W / (GLfloat) H;
-	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
+	projectionMatrixPerspective = perspective(90, ratio, 15.0, 1000.0);
 	projectionMatrixOrthographic = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camNearClip, camFarClip);
 
 	// Call function to render scene depth
@@ -274,6 +296,10 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, depthBuffer->depth);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Bind texture containing normals of the scene
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, normalTex->texid);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Position and velocity update variables
 	glUniform1i(glGetUniformLocation(shader, "texUnitPosition"), 0);
@@ -287,6 +313,9 @@ void runVelShader(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
 	glUniform1f(glGetUniformLocation(shader, "zNear"), camNearClip);
 	glUniform1f(glGetUniformLocation(shader, "camHeight"), camDepth.y);
 	glUniform1f(glGetUniformLocation(shader, "planeWidth"), planeWidth);
+
+	// Scene normal map
+	glUniform1i(glGetUniformLocation(shader, "texUnitNormals"), 3);
 
 	// Particle definitions for air resistance
 	float radius = 0.005; // in meters
@@ -374,7 +403,7 @@ void display(void) {
 void reshape(GLsizei w, GLsizei h) {
 	glViewport(0, 0, w, h);
 	GLfloat ratio = (GLfloat) w / (GLfloat) h;
-	projectionMatrixPerspective = perspective(90, ratio, 1.0, 1000.0);
+	projectionMatrixPerspective = perspective(90, ratio, 15.0, 1000.0);
 	projectionMatrixOrthographic = ortho(-planeWidth/2, planeWidth/2, -planeWidth/2, planeWidth/2, camNearClip, camFarClip);
 }
 

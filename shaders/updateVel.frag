@@ -20,6 +20,9 @@ uniform float airDensity;
 uniform float mass;
 uniform vec3 windDirection;
 
+// Normals
+uniform sampler2D texUnitNormals;
+
 // Lifetime
 uniform float maxLifetime;
 
@@ -34,6 +37,7 @@ float worldPosYFromDepth(float depth) {
     return depth_flipped + (camHeight - zFar);
 }
 
+<<<<<<< HEAD
 vec3 getSurfaceNormal(vec3 pos0, vec2 depthTexCoord0) {
 
     // Get texture coordinates for 2 nearby points
@@ -64,6 +68,8 @@ vec3 getSurfaceNormal(vec3 pos0, vec2 depthTexCoord0) {
 }
 
 
+=======
+>>>>>>> e284f83997e28a769ec2c28d88063f18b8ddb2b1
 void main(void)
 {
   // Fetch position, age and velocity from textures
@@ -117,7 +123,7 @@ void main(void)
   // Check for collision with plane
   vec3 newPos = curPos + deltaTime * newVel;
   if (newPos.y < depth_world) {
-    vec3 normal = getSurfaceNormal(vec3(curPos.x, depth_world, curPos.y), depthTexCoord_in);
+    vec3 normal = texture(texUnitNormals, vec2(u, v)).xyz;
     vec3 impulse = 1.15 * normal * dot(normal, newVel);
     newVel -= impulse;
   }
