@@ -44,13 +44,8 @@
 void onTimer(int value);
 
 // Particle variables
-<<<<<<< HEAD
-int numParticles_WH = 1024; // particle texture width = height
-float maxLifetime = 50.0;
-=======
 int numParticles_WH = 2048; // particle texture width = height
 float maxLifetime = 20.0;
->>>>>>> e284f83997e28a769ec2c28d88063f18b8ddb2b1
 
 // Variables for reading the FBOs
 float pixelSize;
