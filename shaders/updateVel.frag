@@ -26,7 +26,7 @@ uniform float maxLifetime;
 out vec4 out_Color;
 
 // Calculate depth in world coordinates
-float worldPosZFromDepth(float depth) {
+float worldPosYFromDepth(float depth) {
 
     // Scale Z between [0, clip-space-size]
     float depth_flipped = (1-depth) * (zFar - zNear);
@@ -46,8 +46,8 @@ vec3 getSurfaceNormal(vec3 pos0, vec2 depthTexCoord0) {
     float depth_2 = texture(texUnitDepth, depthTexCoord2).x;
 
     // Transform to world coordinates, note that the depth image was taken from above, so the given coordinates are on the y-axis
-    float y_1 = worldPosZFromDepth(depth_1);
-    float y_2 = worldPosZFromDepth(depth_2);
+    float y_1 = worldPosYFromDepth(depth_1);
+    float y_2 = worldPosYFromDepth(depth_2);
 
     // Transform texture coordinates into world coordinates
     float x_1 = (depthTexCoord1.x * planeWidth) - planeWidth/2;
@@ -79,7 +79,7 @@ void main(void)
   float depth_in = texture(texUnitDepth, depthTexCoord_in).x;
 
   // Transform depth to world coordinates
-  float depth_world = worldPosZFromDepth(depth_in);
+  float depth_world = worldPosYFromDepth(depth_in);
 
   // Separate velocity direction and magnitude
   float curVelNorm = length(curVel);
